@@ -1,25 +1,23 @@
 import csv
 import io
 import os
-import sqlite3
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 
+import psycopg2
+import psycopg2.extras
 from flask import Flask, g, jsonify, request, send_from_directory
 
 app = Flask(__name__, static_folder="public", static_url_path="")
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "data", "attendance.db")
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
 
-# ── Database ─────────────────────────────────────────────────────────────────
+# ── Database ──────────────────────────────────────────────────────────────────
 
 def get_db():
     if "db" not in g:
-        os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode=WAL")
+        conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
         g.db = conn
     return g.db
 
@@ -28,34 +26,47 @@ def get_db():
 def close_db(_):
     db = g.pop("db", None)
     if db:
-        db.close()
+        try:
+            db.close()
+        except Exception:
+            pass
+
+
+def row_to_dict(row):
+    if row is None:
+        return None
+    result = dict(row)
+    for k, v in result.items():
+        if isinstance(v, (datetime, date)):
+            result[k] = v.isoformat()
+    return result
 
 
 def init_db():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    conn.executescript("""
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS events (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            id          SERIAL PRIMARY KEY,
             name        TEXT NOT NULL,
             description TEXT,
             event_date  TEXT,
-            created_at  TEXT DEFAULT (datetime('now'))
+            created_at  TIMESTAMP DEFAULT NOW()
         );
 
         CREATE TABLE IF NOT EXISTS participants (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            event_id    INTEGER NOT NULL,
+            id          SERIAL PRIMARY KEY,
+            event_id    INTEGER NOT NULL REFERENCES events(id),
             name        TEXT NOT NULL,
             email       TEXT,
             department  TEXT,
             token       TEXT UNIQUE NOT NULL,
-            attended    INTEGER DEFAULT 0,
-            attended_at TEXT,
-            FOREIGN KEY (event_id) REFERENCES events(id)
+            attended    SMALLINT DEFAULT 0,
+            attended_at TIMESTAMP
         );
     """)
     conn.commit()
+    cur.close()
     conn.close()
 
 
@@ -63,16 +74,17 @@ def init_db():
 
 @app.get("/api/events")
 def list_events():
-    rows = get_db().execute("""
+    cur = get_db().cursor()
+    cur.execute("""
         SELECT e.*,
-               COUNT(p.id)    AS total,
-               SUM(p.attended) AS attended
+               COUNT(p.id)              AS total,
+               COALESCE(SUM(p.attended), 0) AS attended
         FROM events e
         LEFT JOIN participants p ON p.event_id = e.id
         GROUP BY e.id
         ORDER BY e.created_at DESC
-    """).fetchall()
-    return jsonify([dict(r) for r in rows])
+    """)
+    return jsonify([row_to_dict(r) for r in cur.fetchall()])
 
 
 @app.post("/api/events")
@@ -83,12 +95,14 @@ def create_event():
         return jsonify(error="Event name is required"), 400
 
     db = get_db()
-    cur = db.execute(
-        "INSERT INTO events (name, description, event_date) VALUES (?, ?, ?)",
+    cur = db.cursor()
+    cur.execute(
+        "INSERT INTO events (name, description, event_date) VALUES (%s, %s, %s) RETURNING id",
         (name, data.get("description") or None, data.get("event_date") or None),
     )
     db.commit()
-    return jsonify(id=cur.lastrowid, name=name,
+    new_id = cur.fetchone()["id"]
+    return jsonify(id=new_id, name=name,
                    description=data.get("description"),
                    event_date=data.get("event_date"))
 
@@ -96,8 +110,8 @@ def create_event():
 @app.delete("/api/events/<int:event_id>")
 def delete_event(event_id):
     db = get_db()
-    db.execute("DELETE FROM participants WHERE event_id = ?", (event_id,))
-    db.execute("DELETE FROM events WHERE id = ?", (event_id,))
+    db.cursor().execute("DELETE FROM participants WHERE event_id = %s", (event_id,))
+    db.cursor().execute("DELETE FROM events WHERE id = %s", (event_id,))
     db.commit()
     return jsonify(ok=True)
 
@@ -106,32 +120,31 @@ def delete_event(event_id):
 
 @app.get("/api/events/<int:event_id>/participants")
 def list_participants(event_id):
-    rows = get_db().execute(
-        "SELECT * FROM participants WHERE event_id = ? ORDER BY name",
+    cur = get_db().cursor()
+    cur.execute(
+        "SELECT * FROM participants WHERE event_id = %s ORDER BY name",
         (event_id,)
-    ).fetchall()
-    return jsonify([dict(r) for r in rows])
+    )
+    return jsonify([row_to_dict(r) for r in cur.fetchall()])
 
 
 @app.post("/api/events/<int:event_id>/import")
 def import_csv(event_id):
     db = get_db()
-    event = db.execute("SELECT id FROM events WHERE id = ?", (event_id,)).fetchone()
-    if not event:
+    cur = db.cursor()
+    cur.execute("SELECT id FROM events WHERE id = %s", (event_id,))
+    if not cur.fetchone():
         return jsonify(error="Event not found"), 404
 
     if "csv" not in request.files:
         return jsonify(error="No file uploaded"), 400
 
-    file = request.files["csv"]
-    text = file.read().decode("utf-8-sig")  # strip BOM if present
+    text = request.files["csv"].read().decode("utf-8-sig")
     reader = csv.reader(io.StringIO(text))
-
     rows = [r for r in reader if any(c.strip() for c in r)]
     if not rows:
         return jsonify(error="Empty file"), 400
 
-    # Skip header row if first cell looks like a column name
     start = 1 if rows[0][0].strip().lower() in ("name", "full name", "fullname") else 0
 
     count = 0
@@ -141,8 +154,8 @@ def import_csv(event_id):
         department = row[2].strip() if len(row) > 2 else None
         if not name:
             continue
-        db.execute(
-            "INSERT INTO participants (event_id, name, email, department, token) VALUES (?, ?, ?, ?, ?)",
+        cur.execute(
+            "INSERT INTO participants (event_id, name, email, department, token) VALUES (%s, %s, %s, %s, %s)",
             (event_id, name, email or None, department or None, str(uuid.uuid4())),
         )
         count += 1
@@ -154,7 +167,7 @@ def import_csv(event_id):
 @app.delete("/api/events/<int:event_id>/participants")
 def clear_participants(event_id):
     db = get_db()
-    db.execute("DELETE FROM participants WHERE event_id = ?", (event_id,))
+    db.cursor().execute("DELETE FROM participants WHERE event_id = %s", (event_id,))
     db.commit()
     return jsonify(ok=True)
 
@@ -163,29 +176,33 @@ def clear_participants(event_id):
 
 @app.get("/api/attend/<token>")
 def get_attend(token):
-    row = get_db().execute("""
+    cur = get_db().cursor()
+    cur.execute("""
         SELECT p.*, e.name AS event_name, e.event_date, e.description AS event_description
         FROM participants p
         JOIN events e ON e.id = p.event_id
-        WHERE p.token = ?
-    """, (token,)).fetchone()
+        WHERE p.token = %s
+    """, (token,))
+    row = cur.fetchone()
     if not row:
         return jsonify(error="Invalid or expired link"), 404
-    return jsonify(dict(row))
+    return jsonify(row_to_dict(row))
 
 
 @app.post("/api/attend/<token>")
 def mark_attend(token):
     db = get_db()
-    row = db.execute("SELECT * FROM participants WHERE token = ?", (token,)).fetchone()
+    cur = db.cursor()
+    cur.execute("SELECT attended FROM participants WHERE token = %s", (token,))
+    row = cur.fetchone()
     if not row:
         return jsonify(error="Invalid link"), 404
 
     already = bool(row["attended"])
     if not already:
-        db.execute(
-            "UPDATE participants SET attended = 1, attended_at = ? WHERE token = ?",
-            (datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"), token),
+        cur.execute(
+            "UPDATE participants SET attended = 1, attended_at = NOW() WHERE token = %s",
+            (token,),
         )
         db.commit()
     return jsonify(ok=True, already=already)
