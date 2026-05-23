@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
     const db = getDatabase()
 
-    return new Promise((resolve) => {
+    return new Promise<NextResponse>((resolve) => {
       db.run(
         'INSERT INTO events (id, name, description) VALUES (?, ?, ?)',
         [id, name, description || ''],
@@ -52,7 +52,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Missing id or name' }, { status: 400 })
     }
     const db = getDatabase()
-    return new Promise((resolve) => {
+    return new Promise<NextResponse>((resolve) => {
       db.run('UPDATE events SET name = ? WHERE id = ?', [name, id], function (err) {
         if (err) {
           resolve(NextResponse.json({ success: false, message: 'Error updating event' }, { status: 500 }))
@@ -70,7 +70,7 @@ export async function GET(_request: NextRequest) {
   try {
     const db = getDatabase()
 
-    return new Promise((resolve) => {
+    return new Promise<NextResponse>((resolve) => {
       db.all('SELECT * FROM events ORDER BY created_at DESC', (err, rows) => {
         if (err) {
           console.error('Error fetching events:', err)

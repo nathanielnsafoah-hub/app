@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
     const db = getDatabase()
 
-    return new Promise((resolve) => {
+    return new Promise<NextResponse>((resolve) => {
       // Check if already checked in
       db.get(
         'SELECT id FROM attendance WHERE participant_id = ? AND event_id = ? AND DATE(check_in_time) = DATE(CURRENT_TIMESTAMP)',
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
 
     const db = getDatabase()
 
-    return new Promise((resolve) => {
+    return new Promise<NextResponse>((resolve) => {
       db.all(
         `SELECT p.name as participant_name, a.check_in_time 
          FROM attendance a 

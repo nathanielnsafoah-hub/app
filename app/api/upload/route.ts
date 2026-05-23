@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     const db = getDatabase()
     let insertedCount = 0
 
-    return new Promise((resolve) => {
+    return new Promise<NextResponse>((resolve) => {
       db.serialize(() => {
         participants.forEach((participant) => {
           db.run(

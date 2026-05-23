@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
   const db = getDatabase()
 
-  return new Promise((resolve) => {
+  return new Promise<NextResponse>((resolve) => {
     db.get(
       'SELECT id, name, email, event_id FROM participants WHERE invite_token = ?',
       [token],
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
         db.get(
           'SELECT id FROM attendance WHERE participant_id = ? AND event_id = ? AND DATE(check_in_time) = DATE(CURRENT_TIMESTAMP)',
           [row.id, row.event_id],
-          (err2, existing) => {
+          (_err2, existing) => {
             resolve(
               NextResponse.json({
                 success: true,
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
   const db = getDatabase()
 
-  return new Promise((resolve) => {
+  return new Promise<NextResponse>((resolve) => {
     db.get(
       'SELECT id, event_id FROM participants WHERE invite_token = ?',
       [token],
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
         db.get(
           'SELECT id FROM attendance WHERE participant_id = ? AND event_id = ? AND DATE(check_in_time) = DATE(CURRENT_TIMESTAMP)',
           [row.id, row.event_id],
-          (err2, existing) => {
+          (_err2, existing) => {
             if (existing) {
               resolve(NextResponse.json({ success: false, message: 'Already checked in today' }))
               return

@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
     const db = getDatabase()
 
-    return new Promise((resolve) => {
+    return new Promise<NextResponse>((resolve) => {
       db.run(
         'INSERT INTO participants (name, email, event_id) VALUES (?, ?, ?)',
         [name, email || '', eventId],
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
 
     const db = getDatabase()
 
-    return new Promise((resolve) => {
+    return new Promise<NextResponse>((resolve) => {
       db.all(
         'SELECT id, name, email, invite_token FROM participants WHERE event_id = ? ORDER BY name',
         [eventId],
