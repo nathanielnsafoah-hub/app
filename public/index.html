@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Attendance Admin</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-icon">✓</span>
+        <span>AttendanceHub</span>
+      </div>
+      <nav>
+        <button class="nav-btn active" onclick="showSection('events')">Events</button>
+        <button class="nav-btn" onclick="showSection('participants')">Participants</button>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+
+      <!-- Events Section -->
+      <section id="section-events">
+        <div class="page-header">
+          <h1>Events</h1>
+          <button class="btn btn-primary" onclick="openModal('modal-event')">+ New Event</button>
+        </div>
+
+        <div id="events-list" class="card-grid">
+          <p class="empty-state">Loading events…</p>
+        </div>
+      </section>
+
+      <!-- Participants Section -->
+      <section id="section-participants" class="hidden">
+        <div class="page-header">
+          <div>
+            <button class="btn btn-ghost" onclick="showSection('events')">← Back</button>
+            <h1 id="participants-event-name">Participants</h1>
+          </div>
+          <div class="actions-row">
+            <button class="btn btn-outline" onclick="openImport()">Import CSV</button>
+            <button class="btn btn-outline btn-danger" onclick="clearParticipants()">Clear All</button>
+          </div>
+        </div>
+
+        <div class="stats-row" id="stats-row"></div>
+
+        <div class="card">
+          <input type="text" id="search-input" class="search-input" placeholder="Search participants…" oninput="filterTable()" />
+          <table class="table" id="participants-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Department</th>
+                <th>Status</th>
+                <th>Attended At</th>
+                <th>Link</th>
+              </tr>
+            </thead>
+            <tbody id="participants-body">
+              <tr><td colspan="7" class="empty-state">No participants yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal: New Event -->
+  <div class="modal-backdrop hidden" id="modal-event">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>New Event</h2>
+        <button class="close-btn" onclick="closeModal('modal-event')">✕</button>
+      </div>
+      <form id="event-form" onsubmit="createEvent(event)">
+        <label>Event Name *</label>
+        <input type="text" id="event-name" required placeholder="e.g. Safety Training Q2" />
+
+        <label>Description</label>
+        <textarea id="event-desc" rows="2" placeholder="Optional description"></textarea>
+
+        <label>Date</label>
+        <input type="date" id="event-date" />
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('modal-event')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Import CSV -->
+  <div class="modal-backdrop hidden" id="modal-import">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Import Participants</h2>
+        <button class="close-btn" onclick="closeModal('modal-import')">✕</button>
+      </div>
+      <div class="import-info">
+        <p>Upload a CSV file with participant details. Expected columns:</p>
+        <code>name, email, department</code>
+        <p class="note">Header row is optional. Only <strong>name</strong> is required.</p>
+        <p class="note">Example:<br>
+          <code>John Doe, john@company.com, Engineering<br>Jane Smith, jane@company.com, HR</code>
+        </p>
+      </div>
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('csv-file').click()">
+        <span id="drop-label">Click or drag a CSV file here</span>
+        <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none" onchange="previewFile(this)" />
+      </div>
+      <div id="import-preview" class="hidden"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('modal-import')">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="importCSV()" id="import-btn" disabled>Import</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

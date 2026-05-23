@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mark Attendance</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body class="attend-body">
+  <div class="attend-card" id="attend-card">
+    <div class="attend-logo">✓</div>
+    <div id="attend-content">
+      <p class="loading-text">Loading…</p>
+    </div>
+  </div>
+
+  <script>
+    const token = location.pathname.split('/attend/')[1];
+
+    async function load() {
+      try {
+        const res = await fetch(`/api/attend/${token}`);
+        if (!res.ok) throw new Error('Invalid link');
+        const data = await res.json();
+        renderReady(data);
+      } catch {
+        renderError();
+      }
+    }
+
+    function renderReady(data) {
+      const dateStr = data.event_date
+        ? new Date(data.event_date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+        : null;
+
+      document.getElementById('attend-content').innerHTML = `
+        <div class="attend-event-name">${esc(data.event_name)}</div>
+        ${dateStr ? `<div class="attend-event-date">${dateStr}</div>` : ''}
+        ${data.event_description ? `<div class="attend-event-desc">${esc(data.event_description)}</div>` : ''}
+        <div class="attend-divider"></div>
+        <div class="attend-greeting">Hi, <strong>${esc(data.name)}</strong>!</div>
+        ${data.department ? `<div class="attend-dept">${esc(data.department)}</div>` : ''}
+
+        ${data.attended
+          ? `<div class="attend-status attended">
+               <span class="status-icon">✓</span>
+               Attendance already recorded
+               <div class="attend-time">at ${formatTime(data.attended_at)}</div>
+             </div>`
+          : `<button class="btn btn-attend" id="confirm-btn" onclick="confirm()">
+               Confirm Attendance
+             </button>`
+        }
+      `;
+    }
+
+    async function confirm() {
+      const btn = document.getElementById('confirm-btn');
+      btn.disabled = true;
+      btn.textContent = 'Recording…';
+
+      try {
+        const res = await fetch(`/api/attend/${token}`, { method: 'POST' });
+        if (!res.ok) throw new Error();
+        renderSuccess();
+      } catch {
+        btn.disabled = false;
+        btn.textContent = 'Confirm Attendance';
+        alert('Something went wrong. Please try again.');
+      }
+    }
+
+    function renderSuccess() {
+      document.getElementById('attend-content').innerHTML += '';
+      const btn = document.getElementById('confirm-btn');
+      if (btn) btn.remove();
+
+      const content = document.getElementById('attend-content');
+      const status = document.createElement('div');
+      status.className = 'attend-status attended animate-in';
+      status.innerHTML = `
+        <span class="status-icon">✓</span>
+        Attendance recorded successfully!
+        <div class="attend-time">at ${formatTime(new Date().toISOString())}</div>
+      `;
+      content.appendChild(status);
+    }
+
+    function renderError() {
+      document.getElementById('attend-content').innerHTML = `
+        <div class="attend-status error">
+          <span class="status-icon">✕</span>
+          <strong>Invalid or expired link</strong>
+          <p>Please check the link sent to you and try again.</p>
+        </div>
+      `;
+    }
+
+    function formatTime(iso) {
+      if (!iso) return '';
+      return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function esc(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    load();
+  </script>
+</body>
+</html>
