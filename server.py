@@ -8,7 +8,10 @@ import psycopg2
 import psycopg2.extras
 from flask import Flask, g, jsonify, request, send_from_directory
 
-app = Flask(__name__, static_folder="public", static_url_path="")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PUBLIC_DIR = os.path.join(BASE_DIR, "public")
+
+app = Flask(__name__, static_folder=PUBLIC_DIR, static_url_path="")
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
@@ -212,12 +215,12 @@ def mark_attend(token):
 
 @app.get("/")
 def index():
-    return send_from_directory("public", "index.html")
+    return send_from_directory(PUBLIC_DIR, "index.html")
 
 
 @app.get("/attend/<token>")
 def attend_page(token):
-    return send_from_directory("public", "attend.html")
+    return send_from_directory(PUBLIC_DIR, "attend.html")
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
