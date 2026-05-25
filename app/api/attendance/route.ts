@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     return new Promise<NextResponse>((resolve) => {
       // Check if already checked in
       db.get(
-        'SELECT id FROM attendance WHERE participant_id = ? AND event_id = ? AND DATE(check_in_time) = DATE(CURRENT_TIMESTAMP)',
+        'SELECT id FROM attendance WHERE participant_id = ? AND event_id = ?',
         [participantId, eventId],
         (err, row) => {
           if (err) {
@@ -62,6 +62,48 @@ export async function POST(request: NextRequest) {
               }
             }
           )
+        }
+      )
+    })
+  } catch (error) {
+    console.error('Error:', error)
+    return NextResponse.json(
+      { success: false, message: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams
+    const eventId = searchParams.get('eventId')
+
+    if (!eventId) {
+      return NextResponse.json(
+        { success: false, message: 'Missing eventId' },
+        { status: 400 }
+      )
+    }
+
+    const db = getDatabase()
+
+    return new Promise<NextResponse>((resolve) => {
+      db.run(
+        'DELETE FROM attendance WHERE event_id = ?',
+        [eventId],
+        function (err) {
+          if (err) {
+            console.error('Error clearing attendance:', err)
+            resolve(
+              NextResponse.json(
+                { success: false, message: 'Error clearing attendance' },
+                { status: 500 }
+              )
+            )
+          } else {
+            resolve(NextResponse.json({ success: true, deleted: this.changes }))
+          }
         }
       )
     })

@@ -45,6 +45,48 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function DELETE(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams
+    const eventId = searchParams.get('eventId')
+
+    if (!eventId) {
+      return NextResponse.json(
+        { success: false, message: 'Missing eventId' },
+        { status: 400 }
+      )
+    }
+
+    const db = getDatabase()
+
+    return new Promise<NextResponse>((resolve) => {
+      db.serialize(() => {
+        db.run('DELETE FROM attendance WHERE event_id = ?', [eventId], (err) => {
+          if (err) {
+            console.error('Error clearing attendance:', err)
+            resolve(NextResponse.json({ success: false, message: 'Error clearing attendance' }, { status: 500 }))
+            return
+          }
+          db.run('DELETE FROM participants WHERE event_id = ?', [eventId], function (err) {
+            if (err) {
+              console.error('Error clearing participants:', err)
+              resolve(NextResponse.json({ success: false, message: 'Error clearing participants' }, { status: 500 }))
+            } else {
+              resolve(NextResponse.json({ success: true, deleted: this.changes }))
+            }
+          })
+        })
+      })
+    })
+  } catch (error) {
+    console.error('Error:', error)
+    return NextResponse.json(
+      { success: false, message: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams

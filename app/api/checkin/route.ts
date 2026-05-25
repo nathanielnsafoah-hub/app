@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
           return
         }
         db.get(
-          'SELECT id FROM attendance WHERE participant_id = ? AND event_id = ? AND DATE(check_in_time) = DATE(CURRENT_TIMESTAMP)',
+          'SELECT id FROM attendance WHERE participant_id = ? AND event_id = ?',
           [row.id, row.event_id],
           (_err2, existing) => {
             resolve(
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
         }
 
         db.get(
-          'SELECT id FROM attendance WHERE participant_id = ? AND event_id = ? AND DATE(check_in_time) = DATE(CURRENT_TIMESTAMP)',
+          'SELECT id FROM attendance WHERE participant_id = ? AND event_id = ?',
           [row.id, row.event_id],
           (_err2, existing) => {
             if (existing) {

@@ -61,7 +61,7 @@ export default function PersonalCheckinPage() {
           <>
             <div className="text-5xl mb-4">✅</div>
             <h2 className="text-2xl font-bold text-green-600 mb-2">Already Checked In</h2>
-            <p className="text-gray-700 text-lg">Hi <span className="font-bold">{name}</span>, your attendance for today has already been recorded.</p>
+            <p className="text-gray-700 text-lg">Hi <span className="font-bold">{name}</span>, your attendance has already been recorded.</p>
           </>
         )}
 

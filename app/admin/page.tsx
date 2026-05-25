@@ -31,11 +31,14 @@ export default function AdminDashboard() {
   const [tab, setTab] = useState<'attendance' | 'links'>('attendance')
   const [copied, setCopied] = useState<string | null>(null)
   const [linkCopied, setLinkCopied] = useState(false)
+  const [shortLink, setShortLink] = useState('')
   const [showAddEvent, setShowAddEvent] = useState(false)
   const [newEventName, setNewEventName] = useState('')
   const [addingEvent, setAddingEvent] = useState(false)
   const [editingEvent, setEditingEvent] = useState(false)
   const [editEventName, setEditEventName] = useState('')
+  const [clearing, setClearing] = useState(false)
+  const [clearingParticipants, setClearingParticipants] = useState(false)
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
@@ -47,6 +50,7 @@ export default function AdminDashboard() {
     if (selectedEvent) {
       fetchAttendance(selectedEvent)
       fetchParticipants(selectedEvent)
+      setShortLink(`${baseUrl}/amenfiman`)
     }
   }, [selectedEvent])
 
@@ -180,6 +184,55 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleClearParticipants = async () => {
+    if (!selectedEvent) return
+    const confirmed = window.confirm(
+      'Are you sure you want to clear all invite links and attendance records for this event? This cannot be undone.'
+    )
+    if (!confirmed) return
+    setClearingParticipants(true)
+    try {
+      const res = await fetch(`/api/participants?eventId=${selectedEvent}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) {
+        setParticipants([])
+        setAttendance([])
+        setMessage('✓ Invite links and attendance records cleared')
+        setTimeout(() => setMessage(''), 4000)
+      } else {
+        setMessage(`✗ Error: ${data.message}`)
+      }
+    } catch {
+      setMessage('✗ Error clearing participants')
+    } finally {
+      setClearingParticipants(false)
+    }
+  }
+
+  const handleClearAttendance = async () => {
+    if (!selectedEvent) return
+    const confirmed = window.confirm(
+      'Are you sure you want to clear all attendance records for this event? This cannot be undone.'
+    )
+    if (!confirmed) return
+    setClearing(true)
+    try {
+      const res = await fetch(`/api/attendance?eventId=${selectedEvent}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) {
+        setAttendance([])
+        setMessage(`✓ Attendance records cleared`)
+        setTimeout(() => setMessage(''), 4000)
+      } else {
+        setMessage(`✗ Error: ${data.message}`)
+      }
+    } catch {
+      setMessage('✗ Error clearing attendance')
+    } finally {
+      setClearing(false)
+    }
+  }
+
   const downloadAttendance = () => {
     const eventName = events.find((e) => e.id === selectedEvent)?.name || 'event'
     const rows = ['Name,Check-In Time', ...attendance.map((r) =>
@@ -197,7 +250,7 @@ export default function AdminDashboard() {
   const sharedLink = selectedEvent ? `${baseUrl}/attendance/${selectedEvent}` : ''
 
   const copySharedLink = () => {
-    navigator.clipboard.writeText(sharedLink)
+    navigator.clipboard.writeText(shortLink || sharedLink)
     setLinkCopied(true)
     setTimeout(() => setLinkCopied(false), 2000)
   }
@@ -214,7 +267,7 @@ export default function AdminDashboard() {
           <div className="flex gap-2">
             <input
               type="text"
-              value={sharedLink}
+              value={shortLink || sharedLink}
               readOnly
               className="input bg-white flex-1 text-sm"
             />
@@ -401,11 +454,22 @@ export default function AdminDashboard() {
                   <p className="text-sm text-gray-600">
                     Total Checked In: <span className="font-bold text-lg">{attendance.length}</span>
                   </p>
-                  {attendance.length > 0 && (
-                    <button onClick={downloadAttendance} className="btn btn-secondary text-sm">
-                      Download CSV
-                    </button>
-                  )}
+                  <div className="flex gap-2">
+                    {attendance.length > 0 && (
+                      <button onClick={downloadAttendance} className="btn btn-secondary text-sm">
+                        Download CSV
+                      </button>
+                    )}
+                    {selectedEvent && (
+                      <button
+                        onClick={handleClearAttendance}
+                        disabled={clearing}
+                        className="btn text-sm bg-red-100 text-red-700 hover:bg-red-200 border border-red-300"
+                      >
+                        {clearing ? 'Clearing...' : 'Clear Records'}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </>
             )}
@@ -419,12 +483,21 @@ export default function AdminDashboard() {
                   <>
                     <div className="flex justify-between items-center mb-4">
                       <p className="text-sm text-gray-600">Send each person their personal link to check in.</p>
-                      <button
-                        onClick={copyAllLinks}
-                        className="btn btn-secondary text-sm"
-                      >
-                        {copied === 'all' ? '✓ Copied All!' : 'Copy All Links'}
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={copyAllLinks}
+                          className="btn btn-secondary text-sm"
+                        >
+                          {copied === 'all' ? '✓ Copied All!' : 'Copy All Links'}
+                        </button>
+                        <button
+                          onClick={handleClearParticipants}
+                          disabled={clearingParticipants}
+                          className="btn text-sm bg-red-100 text-red-700 hover:bg-red-200 border border-red-300"
+                        >
+                          {clearingParticipants ? 'Clearing...' : 'Clear Records'}
+                        </button>
+                      </div>
                     </div>
                     <div className="space-y-2 max-h-96 overflow-y-auto">
                       {participants.map((p) => (
