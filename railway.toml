@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm ci && NODE_OPTIONS='--max-old-space-size=512' npm run build"
+buildCommand = "NODE_OPTIONS='--max-old-space-size=512' npm run build"
 
 [deploy]
 startCommand = "npx next start -p ${PORT:-3000}"
