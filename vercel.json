@@ -1,18 +1,14 @@
 {
   "version": 2,
   "builds": [
-    {
-      "src": "server.py",
-      "use": "@vercel/python",
-      "config": {
-        "includeFiles": ["public/**", "public/icons/**"]
-      }
-    }
+    { "src": "server.py", "use": "@vercel/python" },
+    { "src": "public/**", "use": "@vercel/static" }
   ],
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "server.py"
-    }
+    { "src": "/api/(.*)",     "dest": "/server.py" },
+    { "src": "/attend/(.*)", "dest": "/server.py" },
+    { "src": "/driver",      "dest": "/public/driver.html" },
+    { "src": "/",            "dest": "/public/index.html" },
+    { "src": "/(.*)",        "dest": "/public/$1" }
   ]
 }
