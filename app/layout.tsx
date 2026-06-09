@@ -24,6 +24,8 @@ export default function RootLayout({
               <div className="space-x-4">
                 <a href="/" className="text-gray-600 hover:text-primary">Home</a>
                 <a href="/admin" className="text-gray-600 hover:text-primary">Admin</a>
+                <a href="/reconciliation" className="text-gray-600 hover:text-primary">Reconciliation</a>
+                <a href="/storage" className="text-gray-600 hover:text-primary">Storage</a>
               </div>
             </div>
           </div>

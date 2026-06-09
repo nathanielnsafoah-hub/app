@@ -32,3 +32,6 @@ yarn-error.log*
 *.db
 *.sqlite
 *.sqlite3
+
+# Uploaded files
+storage/uploads/

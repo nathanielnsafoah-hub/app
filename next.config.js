@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  experimental: {
+    serverComponentsExternalPackages: ['pdf-parse'],
+  },
   async redirects() {
     return [
       {
