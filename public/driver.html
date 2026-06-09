@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1e40af" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Driver Clock-In" />
+  <link rel="manifest" href="/manifest.json" />
+  <title>Driver Clock-In</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand: #1e40af;
+      --brand-dark: #1e3a8a;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --purple: #7c3aed;
+      --amber: #d97706;
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .hidden { display: none !important; }
+
+    /* ── Setup screen ─────────────────────────────────── */
+    #setup-screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      background: linear-gradient(160deg, var(--brand-dark) 0%, var(--brand) 100%);
+      color: white;
+    }
+
+    .setup-icon { font-size: 4rem; margin-bottom: 20px; }
+    .setup-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 8px; text-align: center; }
+    .setup-sub { font-size: 0.9rem; opacity: 0.7; margin-bottom: 36px; text-align: center; }
+
+    .setup-input {
+      width: 100%;
+      padding: 16px;
+      border-radius: 14px;
+      border: 2px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.15);
+      color: white;
+      font-size: 1.05rem;
+      outline: none;
+      margin-bottom: 14px;
+      -webkit-appearance: none;
+    }
+    .setup-input::placeholder { color: rgba(255,255,255,0.45); }
+    .setup-input:focus { border-color: rgba(255,255,255,0.65); background: rgba(255,255,255,0.2); }
+
+    .setup-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 14px;
+      border: none;
+      background: white;
+      color: var(--brand);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .setup-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .setup-btn:active:not(:disabled) { opacity: 0.85; }
+
+    /* ── App header ───────────────────────────────────── */
+    .header {
+      background: linear-gradient(160deg, var(--brand-dark) 0%, var(--brand) 100%);
+      color: white;
+      padding: 20px 20px 28px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .app-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.65;
+      margin-bottom: 3px;
+    }
+
+    .driver-name-display {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .change-btn {
+      background: rgba(255,255,255,0.18);
+      border: none;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 6px;
+      white-space: nowrap;
+    }
+    .change-btn:active { background: rgba(255,255,255,0.28); }
+
+    .date-line {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      opacity: 0.65;
+    }
+
+    /* ── Content ──────────────────────────────────────── */
+    .content { padding: 20px 16px 40px; }
+
+    /* ── Status card ──────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 16px 18px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+
+    .card-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 13px;
+      border-radius: 100px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .chip-done { background: #dcfce7; color: #15803d; }
+    .chip-pending { background: #f1f5f9; color: #94a3b8; }
+
+    /* ── Action buttons ───────────────────────────────── */
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .btn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .action-btn {
+      border: none;
+      border-radius: 18px;
+      padding: 22px 12px;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 0.88rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 9px;
+      transition: transform 0.1s, opacity 0.1s;
+      min-height: 100px;
+      color: white;
+      letter-spacing: 0.01em;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .action-btn .btn-icon { font-size: 2rem; line-height: 1; }
+    .action-btn:active:not(:disabled) { transform: scale(0.94); opacity: 0.88; }
+    .action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-clock-in   { background: linear-gradient(145deg,#15803d,#22c55e); box-shadow: 0 5px 18px rgba(21,128,61,0.38); }
+    .btn-clock-out  { background: linear-gradient(145deg,#b91c1c,#f87171); box-shadow: 0 5px 18px rgba(185,28,28,0.38); }
+    .btn-lodge-out  { background: linear-gradient(145deg,#5b21b6,#a78bfa); box-shadow: 0 5px 18px rgba(91,33,182,0.35); }
+    .btn-lodge-in   { background: linear-gradient(145deg,#b45309,#fbbf24); box-shadow: 0 5px 18px rgba(180,83,9,0.35); }
+
+    /* ── Timeline ─────────────────────────────────────── */
+    .timeline { display: flex; flex-direction: column; gap: 8px; }
+
+    .tl-item {
+      background: var(--surface);
+      border-radius: 14px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .tl-dot {
+      width: 11px; height: 11px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-clock_in          { background: #22c55e; }
+    .dot-clock_out         { background: #f87171; }
+    .dot-lodgment_departure { background: #a78bfa; }
+    .dot-lodgment_return   { background: #fbbf24; }
+
+    .tl-body { flex: 1; min-width: 0; }
+    .tl-event { font-weight: 700; font-size: 0.875rem; }
+    .tl-meta  { font-size: 0.72rem; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tl-time  { font-size: 0.85rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
+
+    .empty-msg {
+      text-align: center;
+      padding: 28px 16px;
+      color: var(--muted);
+      font-size: 0.875rem;
+    }
+
+    /* ── Loading overlay ──────────────────────────────── */
+    #loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.65);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      gap: 16px;
+      color: white;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .spinner {
+      width: 44px; height: 44px;
+      border: 3px solid rgba(255,255,255,0.25);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(72px);
+      padding: 12px 22px;
+      border-radius: 100px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: transform 0.25s ease;
+      z-index: 300;
+      white-space: nowrap;
+      max-width: 90vw;
+      pointer-events: none;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+    #toast.success { background: #15803d; color: white; }
+    #toast.error   { background: #b91c1c; color: white; }
+    #toast.info    { background: #1e293b; color: white; }
+  </style>
+</head>
+<body>
+
+<!-- ── Setup screen ──────────────────────────────────── -->
+<div id="setup-screen">
+  <div class="setup-icon">🚛</div>
+  <div class="setup-title">Driver Clock-In</div>
+  <div class="setup-sub">Enter your name to get started</div>
+  <input id="name-input" class="setup-input" type="text" placeholder="Your full name"
+         autocomplete="name" autocapitalize="words" />
+  <button id="save-name-btn" class="setup-btn" disabled onclick="saveName()">Continue →</button>
+</div>
+
+<!-- ── Main app screen ───────────────────────────────── -->
+<div id="main-screen" class="hidden">
+
+  <div class="header">
+    <div class="header-row">
+      <div>
+        <div class="app-label">Driver Clock-In</div>
+        <div class="driver-name-display" id="header-name"></div>
+      </div>
+      <button class="change-btn" onclick="changeName()">Change</button>
+    </div>
+    <div class="date-line" id="date-line"></div>
+  </div>
+
+  <div class="content">
+
+    <!-- Status -->
+    <div class="card">
+      <div class="card-label">Today's Status</div>
+      <div class="chips" id="status-chips">
+        <span class="chip chip-pending">Loading…</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="section-label">Record Action</div>
+    <div class="btn-grid">
+      <button class="action-btn btn-clock-in"  onclick="doEvent('clock_in')">
+        <span class="btn-icon">☀️</span>Clock In
+      </button>
+      <button class="action-btn btn-clock-out" onclick="doEvent('clock_out')">
+        <span class="btn-icon">🌙</span>Clock Out
+      </button>
+      <button class="action-btn btn-lodge-out" onclick="doEvent('lodgment_departure')">
+        <span class="btn-icon">🏨</span>Lodgment Out
+      </button>
+      <button class="action-btn btn-lodge-in"  onclick="doEvent('lodgment_return')">
+        <span class="btn-icon">🔄</span>Lodgment Return
+      </button>
+    </div>
+
+    <!-- Today's activity -->
+    <div class="section-label">Today's Activity</div>
+    <div class="timeline" id="timeline">
+      <div class="empty-msg">No activity recorded yet today</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Loading overlay ───────────────────────────────── -->
+<div id="loading-overlay" class="hidden">
+  <div class="spinner"></div>
+  <div id="loading-text">Getting GPS location…</div>
+</div>
+
+<!-- ── Toast ─────────────────────────────────────────── -->
+<div id="toast"></div>
+
+<script>
+  const LABELS = {
+    clock_in:            'Clock In',
+    clock_out:           'Clock Out',
+    lodgment_departure:  'Lodgment Departure',
+    lodgment_return:     'Lodgment Return',
+  };
+
+  let driverName = localStorage.getItem('driverName') || '';
+
+  // ── Setup ──────────────────────────────────────────────
+
+  const nameInput = document.getElementById('name-input');
+  const saveBtn   = document.getElementById('save-name-btn');
+
+  nameInput.addEventListener('input', () => {
+    saveBtn.disabled = nameInput.value.trim().length < 2;
+  });
+
+  nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') saveName(); });
+
+  function saveName() {
+    const val = nameInput.value.trim();
+    if (val.length < 2) return;
+    driverName = val;
+    localStorage.setItem('driverName', val);
+    showMain();
+  }
+
+  function changeName() {
+    if (!confirm('Change your driver name? You will need to enter it again.')) return;
+    localStorage.removeItem('driverName');
+    driverName = '';
+    document.getElementById('main-screen').classList.add('hidden');
+    document.getElementById('setup-screen').classList.remove('hidden');
+    nameInput.value = '';
+    saveBtn.disabled = true;
+  }
+
+  // ── Main screen ─────────────────────────────────────────
+
+  function showMain() {
+    document.getElementById('setup-screen').classList.add('hidden');
+    document.getElementById('main-screen').classList.remove('hidden');
+    document.getElementById('header-name').textContent = driverName;
+
+    const now = new Date();
+    document.getElementById('date-line').textContent =
+      now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    loadToday();
+  }
+
+  // ── GPS ─────────────────────────────────────────────────
+
+  function getGPS() {
+    return new Promise(resolve => {
+      if (!navigator.geolocation) { resolve(null); return; }
+      navigator.geolocation.getCurrentPosition(
+        p => resolve({ latitude: p.coords.latitude, longitude: p.coords.longitude, accuracy: p.coords.accuracy }),
+        () => resolve(null),
+        { timeout: 10000, enableHighAccuracy: true, maximumAge: 0 }
+      );
+    });
+  }
+
+  // ── Clock action ────────────────────────────────────────
+
+  async function doEvent(eventType) {
+    setLoading(true, 'Getting GPS location…');
+
+    const gps = await getGPS();
+    setLoadingText('Recording…');
+
+    try {
+      const res = await fetch('/api/driver/clock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          driver_name: driverName,
+          event_type:  eventType,
+          ...(gps || {}),
+        }),
+      });
+
+      if (!res.ok) throw new Error();
+
+      setLoading(false);
+      const locStr = gps ? `GPS ±${Math.round(gps.accuracy)}m` : 'no GPS';
+      showToast(`${LABELS[eventType]} recorded · ${locStr}`, 'success');
+      loadToday();
+    } catch {
+      setLoading(false);
+      showToast('Failed — check your connection', 'error');
+    }
+  }
+
+  // ── Load today ──────────────────────────────────────────
+
+  async function loadToday() {
+    const today = localDateStr();
+    try {
+      const res = await fetch(`/api/driver/today?driver_name=${encodeURIComponent(driverName)}&date=${today}`);
+      const events = await res.json();
+      renderStatus(events);
+      renderTimeline(events);
+    } catch {
+      // network error — leave existing content
+    }
+  }
+
+  function localDateStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function renderStatus(events) {
+    const done = new Set(events.map(e => e.event_type));
+    const html = Object.entries(LABELS).map(([k, label]) => {
+      const isDone = done.has(k);
+      return `<span class="chip ${isDone ? 'chip-done' : 'chip-pending'}">${isDone ? '✓' : '○'} ${label}</span>`;
+    }).join('');
+    document.getElementById('status-chips').innerHTML = html;
+  }
+
+  function renderTimeline(events) {
+    const el = document.getElementById('timeline');
+    if (!events.length) {
+      el.innerHTML = '<div class="empty-msg">No activity recorded yet today</div>';
+      return;
+    }
+    el.innerHTML = events.map(e => {
+      const t    = new Date(e.clocked_at);
+      const time = t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const gps  = (e.latitude && e.longitude)
+        ? `${e.latitude.toFixed(5)}, ${e.longitude.toFixed(5)}`
+        : 'GPS not available';
+      return `<div class="tl-item">
+        <div class="tl-dot dot-${e.event_type}"></div>
+        <div class="tl-body">
+          <div class="tl-event">${LABELS[e.event_type]}</div>
+          <div class="tl-meta">${gps}</div>
+        </div>
+        <div class="tl-time">${time}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── UI helpers ──────────────────────────────────────────
+
+  function setLoading(on, text) {
+    const overlay = document.getElementById('loading-overlay');
+    overlay.classList.toggle('hidden', !on);
+    if (text) document.getElementById('loading-text').textContent = text;
+    document.querySelectorAll('.action-btn').forEach(b => b.disabled = on);
+  }
+
+  function setLoadingText(t) {
+    document.getElementById('loading-text').textContent = t;
+  }
+
+  let _toastTimer;
+  function showToast(msg, type = 'info') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = `${type} show`;
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+  }
+
+  // ── Service worker ──────────────────────────────────────
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+
+  // ── Init ─────────────────────────────────────────────────
+
+  if (driverName) {
+    showMain();
+  }
+</script>
+</body>
+</html>

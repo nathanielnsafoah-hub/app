@@ -7,8 +7,9 @@ function showSection(name) {
   document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
   document.getElementById(`section-${name}`).classList.remove('hidden');
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  const navMap = { events: 0, participants: 1 };
+  const navMap = { events: 0, participants: 1, drivers: 2 };
   document.querySelectorAll('.nav-btn')[navMap[name] ?? 0]?.classList.add('active');
+  if (name === 'drivers') loadDriverClockings();
 }
 
 // ── Events ───────────────────────────────────────────
@@ -265,6 +266,101 @@ function toast(msg) {
 function esc(str) {
   if (!str) return '';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Drivers admin ────────────────────────────────────
+
+const DRIVER_EVENT_LABELS = {
+  clock_in:            'Clock In',
+  clock_out:           'Clock Out',
+  lodgment_departure:  'Lodgment Departure',
+  lodgment_return:     'Lodgment Return',
+};
+
+const DRIVER_EVENT_COLORS = {
+  clock_in:            '#16a34a',
+  clock_out:           '#dc2626',
+  lodgment_departure:  '#7c3aed',
+  lodgment_return:     '#d97706',
+};
+
+let allDriverRows = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+  const dateInput = document.getElementById('driver-date-filter');
+  if (!dateInput) return;
+  const today = new Date();
+  dateInput.value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  dateInput.addEventListener('change', loadDriverClockings);
+  updateExportLink();
+});
+
+async function loadDriverClockings() {
+  const date   = document.getElementById('driver-date-filter').value;
+  const search = document.getElementById('driver-search').value.trim();
+  const params = new URLSearchParams();
+  if (date)   params.set('date',   date);
+  if (search) params.set('driver', search);
+
+  updateExportLink();
+
+  const res  = await fetch(`/api/admin/driver-clockings?${params}`);
+  allDriverRows = await res.json();
+  renderDriverTable(allDriverRows);
+  renderDriverStats(allDriverRows);
+}
+
+function filterDrivers() {
+  const q = document.getElementById('driver-search').value.toLowerCase();
+  const filtered = allDriverRows.filter(r => r.driver_name.toLowerCase().includes(q));
+  renderDriverTable(filtered);
+  renderDriverStats(filtered);
+  loadDriverClockings();
+}
+
+function renderDriverTable(rows) {
+  const tbody = document.getElementById('drivers-body');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No records found for the selected date / filter.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map((r, i) => {
+    const time = new Date(r.clocked_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+    const gps  = (r.latitude && r.longitude)
+      ? `<a href="https://maps.google.com/?q=${r.latitude},${r.longitude}" target="_blank" style="color:var(--primary);text-decoration:none">${r.latitude.toFixed(5)}, ${r.longitude.toFixed(5)} ↗</a>`
+      : '<span style="color:var(--muted)">—</span>';
+    const acc  = r.accuracy ? `±${Math.round(r.accuracy)}m` : '—';
+    const color = DRIVER_EVENT_COLORS[r.event_type] || '#64748b';
+    const label = DRIVER_EVENT_LABELS[r.event_type] || r.event_type;
+    return `<tr>
+      <td style="color:var(--muted)">${i + 1}</td>
+      <td><strong>${esc(r.driver_name)}</strong></td>
+      <td><span style="color:${color};font-weight:600">${label}</span></td>
+      <td style="color:var(--muted)">${time}</td>
+      <td>${gps}</td>
+      <td style="color:var(--muted)">${acc}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderDriverStats(rows) {
+  const drivers = new Set(rows.map(r => r.driver_name)).size;
+  const counts  = {};
+  rows.forEach(r => { counts[r.event_type] = (counts[r.event_type] || 0) + 1; });
+
+  document.getElementById('driver-stats-row').innerHTML = `
+    <div class="stat-chip"><span>Drivers</span><strong>${drivers}</strong></div>
+    <div class="stat-chip success"><span>Clock-Ins</span><strong>${counts.clock_in || 0}</strong></div>
+    <div class="stat-chip"><span>Clock-Outs</span><strong>${counts.clock_out || 0}</strong></div>
+    <div class="stat-chip"><span>Lodgment Events</span><strong>${(counts.lodgment_departure || 0) + (counts.lodgment_return || 0)}</strong></div>
+  `;
+}
+
+function updateExportLink() {
+  const date   = document.getElementById('driver-date-filter')?.value || '';
+  const btn    = document.getElementById('export-drivers-btn');
+  if (!btn) return;
+  btn.href = `/api/admin/driver-clockings/export${date ? '?date=' + date : ''}`;
 }
 
 // ── Init ──────────────────────────────────────────────

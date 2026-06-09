@@ -17,6 +17,7 @@
       <nav>
         <button class="nav-btn active" onclick="showSection('events')">Events</button>
         <button class="nav-btn" onclick="showSection('participants')">Participants</button>
+        <button class="nav-btn" onclick="showSection('drivers')">🚛 Drivers</button>
       </nav>
     </aside>
 
@@ -70,6 +71,44 @@
           </table>
         </div>
       </section>
+      <!-- Drivers Section -->
+      <section id="section-drivers" class="hidden">
+        <div class="page-header">
+          <h1>Driver Attendance</h1>
+          <div class="actions-row">
+            <a id="export-drivers-btn" class="btn btn-outline" href="#">Export CSV</a>
+          </div>
+        </div>
+
+        <div class="stats-row" id="driver-stats-row"></div>
+
+        <div class="card" style="margin-bottom:20px">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <input type="date" id="driver-date-filter" class="search-input" style="width:auto;margin-bottom:0" />
+            <input type="text" id="driver-search" class="search-input" style="flex:1;min-width:160px;margin-bottom:0" placeholder="Search driver name…" oninput="filterDrivers()" />
+            <a href="/driver" target="_blank" class="btn btn-primary" style="white-space:nowrap">Open Driver App ↗</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <table class="table" id="drivers-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Driver</th>
+                <th>Event</th>
+                <th>Time</th>
+                <th>GPS Location</th>
+                <th>Accuracy</th>
+              </tr>
+            </thead>
+            <tbody id="drivers-body">
+              <tr><td colspan="6" class="empty-state">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
     </main>
   </div>
 

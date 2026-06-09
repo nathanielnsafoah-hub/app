@@ -6,7 +6,7 @@ from datetime import datetime, date
 
 import psycopg2
 import psycopg2.extras
-from flask import Flask, g, jsonify, request, send_from_directory
+from flask import Flask, Response, g, jsonify, request, send_from_directory
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PUBLIC_DIR = os.path.join(BASE_DIR, "public")
@@ -49,6 +49,16 @@ def init_db():
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
     cur.execute("""
+        CREATE TABLE IF NOT EXISTS driver_clockings (
+            id          SERIAL PRIMARY KEY,
+            driver_name TEXT NOT NULL,
+            event_type  TEXT NOT NULL,
+            clocked_at  TIMESTAMP DEFAULT NOW(),
+            latitude    REAL,
+            longitude   REAL,
+            accuracy    REAL
+        );
+
         CREATE TABLE IF NOT EXISTS events (
             id          SERIAL PRIMARY KEY,
             name        TEXT NOT NULL,
@@ -211,6 +221,98 @@ def mark_attend(token):
     return jsonify(ok=True, already=already)
 
 
+# ── Driver clock-in ───────────────────────────────────────────────────────────
+
+VALID_EVENT_TYPES = {"clock_in", "clock_out", "lodgment_departure", "lodgment_return"}
+
+
+@app.post("/api/driver/clock")
+def driver_clock():
+    data = request.get_json() or {}
+    driver_name = (data.get("driver_name") or "").strip()
+    event_type  = (data.get("event_type")  or "").strip()
+
+    if not driver_name:
+        return jsonify(error="Driver name is required"), 400
+    if event_type not in VALID_EVENT_TYPES:
+        return jsonify(error="Invalid event type"), 400
+
+    db = get_db()
+    cur = db.cursor()
+    cur.execute(
+        """INSERT INTO driver_clockings (driver_name, event_type, latitude, longitude, accuracy)
+           VALUES (%s, %s, %s, %s, %s) RETURNING id, clocked_at""",
+        (driver_name, event_type,
+         data.get("latitude"), data.get("longitude"), data.get("accuracy")),
+    )
+    row = cur.fetchone()
+    db.commit()
+    return jsonify(id=row["id"], clocked_at=row["clocked_at"].isoformat())
+
+
+@app.get("/api/driver/today")
+def driver_today():
+    driver_name = request.args.get("driver_name", "").strip()
+    date        = request.args.get("date")          # YYYY-MM-DD (client local date)
+    cur = get_db().cursor()
+    if date:
+        cur.execute(
+            "SELECT * FROM driver_clockings WHERE driver_name = %s AND DATE(clocked_at) = %s ORDER BY clocked_at DESC",
+            (driver_name, date),
+        )
+    else:
+        cur.execute(
+            "SELECT * FROM driver_clockings WHERE driver_name = %s AND DATE(clocked_at) = CURRENT_DATE ORDER BY clocked_at DESC",
+            (driver_name,),
+        )
+    return jsonify([row_to_dict(r) for r in cur.fetchall()])
+
+
+@app.get("/api/admin/driver-clockings")
+def admin_driver_clockings():
+    date_filter   = request.args.get("date", "").strip()
+    driver_filter = request.args.get("driver", "").strip()
+    cur = get_db().cursor()
+    q, params = "SELECT * FROM driver_clockings WHERE 1=1", []
+    if date_filter:
+        q += " AND DATE(clocked_at) = %s";  params.append(date_filter)
+    if driver_filter:
+        q += " AND driver_name ILIKE %s";   params.append(f"%{driver_filter}%")
+    q += " ORDER BY clocked_at DESC LIMIT 500"
+    cur.execute(q, params)
+    return jsonify([row_to_dict(r) for r in cur.fetchall()])
+
+
+@app.get("/api/admin/driver-clockings/export")
+def export_driver_clockings():
+    date_filter = request.args.get("date", "").strip()
+    cur = get_db().cursor()
+    q, params = (
+        "SELECT driver_name, event_type, clocked_at, latitude, longitude, accuracy "
+        "FROM driver_clockings WHERE 1=1",
+        [],
+    )
+    if date_filter:
+        q += " AND DATE(clocked_at) = %s"; params.append(date_filter)
+    q += " ORDER BY driver_name, clocked_at"
+    cur.execute(q, params)
+    rows = cur.fetchall()
+
+    out = io.StringIO()
+    w = csv.writer(out)
+    w.writerow(["Driver Name", "Event", "Time", "Latitude", "Longitude", "Accuracy (m)"])
+    for r in rows:
+        w.writerow([
+            r["driver_name"], r["event_type"], r["clocked_at"],
+            r["latitude"] or "", r["longitude"] or "", r["accuracy"] or "",
+        ])
+    return Response(
+        out.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment;filename=driver-clockings.csv"},
+    )
+
+
 # ── Static routes ─────────────────────────────────────────────────────────────
 
 @app.get("/")
@@ -221,6 +323,11 @@ def index():
 @app.get("/attend/<token>")
 def attend_page(token):
     return send_from_directory(PUBLIC_DIR, "attend.html")
+
+
+@app.get("/driver")
+def driver_app():
+    return send_from_directory(PUBLIC_DIR, "driver.html")
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
