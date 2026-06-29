@@ -193,21 +193,35 @@
   </div>
 </div>
 
-<!-- ══ RESET PIN DIALOG ═════════════════════════════════════════ -->
+<!-- ══ RESET PIN DIALOG (direct, no admin password) ══════════════ -->
 <div id="reset-dialog" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;padding:24px">
   <div style="background:#fff;border-radius:22px;padding:28px;width:100%;max-width:360px;box-shadow:0 8px 40px rgba(0,0,0,.3);text-align:center">
-    <div style="font-size:2.8rem;margin-bottom:10px">🔓</div>
-    <h3 style="font-size:1.1rem;font-weight:900;color:#0f172a;margin-bottom:6px">Reset Driver PIN</h3>
-    <p style="font-size:.82rem;color:#64748b;margin-bottom:6px">Driver: <strong id="reset-driver-name">—</strong></p>
-    <p style="font-size:.8rem;color:#64748b;margin-bottom:20px">Ask your manager or admin to enter the admin password to reset this driver's PIN back to <strong>1234</strong>.</p>
-    <input type="password" id="reset-admin-pw" placeholder="Admin password" onkeydown="if(event.key==='Enter')doResetPin()"
-      style="width:100%;padding:13px 16px;border:2px solid #e2e8f0;border-radius:12px;font-size:.95rem;font-weight:600;color:#0f172a;outline:none;margin-bottom:10px;transition:border-color .2s"
-      onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='#e2e8f0'"/>
-    <div id="reset-err" style="color:#dc2626;font-size:.83rem;font-weight:700;margin-bottom:10px;padding:8px;background:#fff1f2;border-radius:8px;display:none"></div>
-    <div id="reset-ok" style="color:#15803d;font-size:.85rem;font-weight:700;margin-bottom:10px;padding:10px;background:#f0fdf4;border-radius:8px;display:none">
-      ✅ PIN reset to <strong>1234</strong>. Use 1234 to log in, then create a new PIN.
+    <div style="font-size:2.5rem;margin-bottom:10px">🔑</div>
+    <h3 style="font-size:1.1rem;font-weight:900;color:#0f172a;margin-bottom:4px" id="reset-step-title">Create New PIN</h3>
+    <p style="font-size:.82rem;color:#64748b;margin-bottom:4px">Driver: <strong id="reset-driver-name">—</strong></p>
+    <p style="font-size:.8rem;color:#64748b;margin-bottom:16px" id="reset-step-sub">Choose a new 4-digit PIN</p>
+    <!-- PIN dots -->
+    <div style="display:flex;gap:12px;justify-content:center;margin-bottom:8px">
+      <div id="rd0" style="width:18px;height:18px;border-radius:50%;border:2.5px solid #e2e8f0;background:#fff;transition:all .2s"></div>
+      <div id="rd1" style="width:18px;height:18px;border-radius:50%;border:2.5px solid #e2e8f0;background:#fff;transition:all .2s"></div>
+      <div id="rd2" style="width:18px;height:18px;border-radius:50%;border:2.5px solid #e2e8f0;background:#fff;transition:all .2s"></div>
+      <div id="rd3" style="width:18px;height:18px;border-radius:50%;border:2.5px solid #e2e8f0;background:#fff;transition:all .2s"></div>
     </div>
-    <button onclick="doResetPin()" id="reset-btn" style="width:100%;padding:13px;background:#dc2626;color:#fff;border:none;border-radius:12px;font-weight:800;font-size:.95rem;cursor:pointer;margin-bottom:8px">Reset PIN</button>
+    <div id="reset-err" style="color:#dc2626;font-size:.83rem;font-weight:700;margin-bottom:8px;padding:8px;background:#fff1f2;border-radius:8px;display:none"></div>
+    <!-- PIN pad -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+      <div class="pin-key" onclick="rKey('1')">1</div>
+      <div class="pin-key" onclick="rKey('2')">2</div>
+      <div class="pin-key" onclick="rKey('3')">3</div>
+      <div class="pin-key" onclick="rKey('4')">4</div>
+      <div class="pin-key" onclick="rKey('5')">5</div>
+      <div class="pin-key" onclick="rKey('6')">6</div>
+      <div class="pin-key" onclick="rKey('7')">7</div>
+      <div class="pin-key" onclick="rKey('8')">8</div>
+      <div class="pin-key" onclick="rKey('9')">9</div>
+      <div class="pin-key del" onclick="rDel()">⌫</div>
+      <div class="pin-key" onclick="rKey('0')" style="grid-column:2">0</div>
+    </div>
     <button onclick="closeResetDialog()" style="width:100%;padding:10px;background:#f1f5f9;color:#64748b;border:none;border-radius:12px;font-weight:700;font-size:.88rem;cursor:pointer">Cancel</button>
   </div>
 </div>
@@ -582,60 +596,63 @@ window.addEventListener('load',()=>{
   if(s&&s.driver){driver=s.driver;branch=s.branch;startTime=new Date(s.startTime);totalKm=s.km||0;document.getElementById('km-val').textContent=totalKm.toFixed(2);startActiveSession();}
 });
 
-/* ── Reset PIN dialog ──────────────────────────────────── */
+/* ── Reset PIN (no admin needed) ───────────────────────── */
+let rPin='', rFirst='', rStep=0;
+
 function showResetDialog(){
+  rPin=''; rFirst=''; rStep=0;
   document.getElementById('reset-driver-name').textContent = driver ? driver.n : '—';
-  document.getElementById('reset-admin-pw').value = '';
+  document.getElementById('reset-step-title').textContent = 'Create New PIN';
+  document.getElementById('reset-step-sub').textContent = 'Choose a new 4-digit PIN';
   document.getElementById('reset-err').style.display = 'none';
-  document.getElementById('reset-ok').style.display = 'none';
-  document.getElementById('reset-btn').style.display = 'block';
+  updateRDots();
   document.getElementById('reset-dialog').style.display = 'flex';
-  setTimeout(()=>document.getElementById('reset-admin-pw').focus(), 100);
 }
 function closeResetDialog(){
   document.getElementById('reset-dialog').style.display = 'none';
 }
-async function doResetPin(){
-  const adminPw = document.getElementById('reset-admin-pw').value.trim();
-  const errEl = document.getElementById('reset-err');
-  errEl.style.display = 'none';
-  if(!adminPw){ errEl.textContent='Please enter the admin password.'; errEl.style.display='block'; return; }
-  if(!driver){ errEl.textContent='No driver selected.'; errEl.style.display='block'; return; }
-
-  document.getElementById('reset-btn').textContent = 'Resetting...';
-  document.getElementById('reset-btn').disabled = true;
-
-  try{
-    const res = await fetch('/api/driver/reset-pin',{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({driver_name: driver.n, admin_password: adminPw})
-    });
-    const data = await res.json();
-    if(!res.ok){
-      errEl.textContent = data.error || 'Incorrect admin password.';
-      errEl.style.display = 'block';
-      document.getElementById('reset-btn').textContent = 'Reset PIN';
-      document.getElementById('reset-btn').disabled = false;
-      document.getElementById('reset-admin-pw').value = '';
-      document.getElementById('reset-admin-pw').focus();
-      return;
+function updateRDots(){
+  for(let i=0;i<4;i++){
+    const d=document.getElementById('rd'+i);
+    d.style.background = i<rPin.length ? '#15803d' : '#fff';
+    d.style.borderColor = i<rPin.length ? '#15803d' : '#e2e8f0';
+  }
+}
+function rKey(k){
+  if(rPin.length>=4) return;
+  rPin+=k; updateRDots();
+  if(rPin.length===4){
+    if(rStep===0){
+      rFirst=rPin; rPin=''; rStep=1;
+      updateRDots();
+      document.getElementById('reset-step-title').textContent = 'Confirm New PIN';
+      document.getElementById('reset-step-sub').textContent = 'Enter your new PIN again to confirm';
+      document.getElementById('reset-err').style.display='none';
+    } else {
+      if(rPin !== rFirst){
+        document.getElementById('reset-err').textContent = 'PINs do not match. Try again.';
+        document.getElementById('reset-err').style.display = 'block';
+        rPin=''; rStep=0; rFirst=''; updateRDots();
+        document.getElementById('reset-step-title').textContent = 'Create New PIN';
+        document.getElementById('reset-step-sub').textContent = 'Choose a new 4-digit PIN';
+      } else {
+        saveResetPin(rPin);
+      }
     }
-    // Success
-    document.getElementById('reset-ok').style.display = 'block';
-    document.getElementById('reset-btn').style.display = 'none';
-    document.getElementById('reset-admin-pw').value = '';
-    // After 3 seconds close dialog and go back to PIN entry with hint
-    setTimeout(()=>{
-      closeResetDialog();
-      pin = ''; updateDots();
-      document.getElementById('pin-subtitle').textContent = 'Your PIN was reset — enter 1234 to continue';
-      document.getElementById('pin-subtitle').style.color = '#15803d';
-    }, 3000);
+  }
+}
+function rDel(){ rPin=rPin.slice(0,-1); updateRDots(); }
+async function saveResetPin(newPin){
+  document.getElementById('reset-err').style.display='none';
+  try{
+    await fetch('/api/driver/set-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({driver_name:driver.n,new_pin:newPin})});
+    closeResetDialog();
+    // Go straight to clock-in screen — PIN is now set
+    goToClockIn();
   }catch(e){
-    errEl.textContent = 'Network error. Please try again.';
-    errEl.style.display = 'block';
-    document.getElementById('reset-btn').textContent = 'Reset PIN';
-    document.getElementById('reset-btn').disabled = false;
+    document.getElementById('reset-err').textContent='Network error. Please try again.';
+    document.getElementById('reset-err').style.display='block';
+    rPin=''; updateRDots();
   }
 }
 
