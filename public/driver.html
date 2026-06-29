@@ -129,6 +129,27 @@
       <div class="dinfo-row"><span class="dinfo-icon">🚗</span><div><div class="dinfo-lbl">Vehicle</div><div class="dinfo-val" id="dinfo-vehicle" style="color:var(--g);letter-spacing:.06em">—</div></div></div>
     </div>
     <button class="btn btn-green" id="continue-btn" onclick="goToPin()" disabled>Continue →</button>
+
+    <!-- Admin shortcut -->
+    <div style="border-top:1px solid #e2e8f0;margin-top:18px;padding-top:16px;text-align:center">
+      <button onclick="showAdminDialog()" style="background:none;border:none;color:#64748b;font-size:.82rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;transition:background .2s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">
+        🔒 Admin Report
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin password dialog -->
+<div id="admin-dialog" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;align-items:center;justify-content:center;padding:24px">
+  <div style="background:#fff;border-radius:20px;padding:28px;width:100%;max-width:340px;box-shadow:0 8px 40px rgba(0,0,0,.25);text-align:center">
+    <div style="font-size:2.5rem;margin-bottom:10px">🔐</div>
+    <h3 style="font-size:1.05rem;font-weight:900;color:#0f172a;margin-bottom:4px">Admin Access</h3>
+    <p style="font-size:.8rem;color:#64748b;margin-bottom:18px">Enter the admin password to view all branch reports</p>
+    <input type="password" id="admin-pw-input" placeholder="Admin password" onkeydown="if(event.key==='Enter')checkAdminPw()"
+      style="width:100%;padding:12px 16px;border:2px solid #e2e8f0;border-radius:12px;font-size:.95rem;font-weight:600;color:#0f172a;outline:none;margin-bottom:10px"/>
+    <div id="admin-pw-err" style="color:#dc2626;font-size:.82rem;font-weight:700;margin-bottom:10px;display:none">Incorrect password. Try again.</div>
+    <button onclick="checkAdminPw()" style="width:100%;padding:13px;background:#15803d;color:#fff;border:none;border-radius:12px;font-weight:800;font-size:.95rem;cursor:pointer;margin-bottom:8px">Access Report →</button>
+    <button onclick="hideAdminDialog()" style="width:100%;padding:10px;background:#f1f5f9;color:#64748b;border:none;border-radius:12px;font-weight:700;font-size:.88rem;cursor:pointer">Cancel</button>
   </div>
 </div>
 
@@ -484,6 +505,31 @@ async function clockOut(){
 window.addEventListener('load',()=>{
   const s=JSON.parse(localStorage.getItem('ds')||'null');
   if(s&&s.driver){driver=s.driver;branch=s.branch;startTime=new Date(s.startTime);totalKm=s.km||0;document.getElementById('km-val').textContent=totalKm.toFixed(2);startActiveSession();}
+});
+
+/* ── Admin dialog ──────────────────────────────────────── */
+function showAdminDialog(){
+  document.getElementById('admin-pw-input').value='';
+  document.getElementById('admin-pw-err').style.display='none';
+  document.getElementById('admin-dialog').style.display='flex';
+  setTimeout(()=>document.getElementById('admin-pw-input').focus(),100);
+}
+function hideAdminDialog(){
+  document.getElementById('admin-dialog').style.display='none';
+}
+function checkAdminPw(){
+  const pw=document.getElementById('admin-pw-input').value.trim();
+  if(pw==='Amenfiman2026'){
+    sessionStorage.setItem('admin_ok','1');
+    window.location='/driver-report';
+  } else {
+    document.getElementById('admin-pw-err').style.display='block';
+    document.getElementById('admin-pw-input').value='';
+    document.getElementById('admin-pw-input').focus();
+  }
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('admin-dialog').addEventListener('click',function(e){if(e.target===this)hideAdminDialog();});
 });
 </script>
 </body>
