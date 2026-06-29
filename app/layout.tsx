@@ -26,6 +26,8 @@ export default function RootLayout({
                 <a href="/admin" className="text-gray-600 hover:text-primary">Admin</a>
                 <a href="/reconciliation" className="text-gray-600 hover:text-primary">Reconciliation</a>
                 <a href="/storage" className="text-gray-600 hover:text-primary">Storage</a>
+                <a href="/drivers" className="bg-green-700 text-white px-3 py-1.5 rounded-lg font-semibold hover:bg-green-800 transition">🚗 Drivers</a>
+                <a href="/drivers/report" className="text-gray-600 hover:text-primary">Driver Report</a>
               </div>
             </div>
           </div>

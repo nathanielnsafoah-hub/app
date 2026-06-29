@@ -59,6 +59,25 @@ function initializeDatabase() {
     // Migrate: add invite_token if missing
     database.run(`ALTER TABLE participants ADD COLUMN invite_token TEXT`, () => {});
     database.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_participants_token ON participants(invite_token)`, () => {});
+
+    // Driver logs table
+    database.run(`
+      CREATE TABLE IF NOT EXISTS driver_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        driver_name TEXT NOT NULL,
+        vehicle_number TEXT NOT NULL,
+        branch TEXT NOT NULL,
+        clock_in_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+        clock_out_time DATETIME,
+        clock_in_lat REAL,
+        clock_in_lng REAL,
+        clock_out_lat REAL,
+        clock_out_lng REAL,
+        km_consumed REAL DEFAULT 0,
+        status TEXT DEFAULT 'clocked_in',
+        notes TEXT
+      )
+    `);
   });
 }
 

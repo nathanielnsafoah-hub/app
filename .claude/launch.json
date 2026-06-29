@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "attendance",
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": ["/Users/air2/Documents/attendance/start_server.sh"],
+      "port": 8080
+    }
+  ]
+}

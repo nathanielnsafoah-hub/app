@@ -4,12 +4,16 @@ let allParticipants = [];
 // ── Section navigation ───────────────────────────────
 
 function showSection(name) {
+  const adminBranch = sessionStorage.getItem('amenfiman_admin_branch') || 'MANAGER';
+  const isManager   = adminBranch === 'MANAGER';
+  if (!isManager && name !== 'reports') return;
+
   document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
   document.getElementById(`section-${name}`).classList.remove('hidden');
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  const navMap = { events: 0, participants: 1, drivers: 2 };
-  document.querySelectorAll('.nav-btn')[navMap[name] ?? 0]?.classList.add('active');
+  document.getElementById(`nav-${name}`)?.classList.add('active');
   if (name === 'drivers') loadDriverClockings();
+  if (name === 'reports') initReports();
 }
 
 // ── Events ───────────────────────────────────────────
@@ -273,8 +277,8 @@ function esc(str) {
 const DRIVER_EVENT_LABELS = {
   clock_in:            'Clock In',
   clock_out:           'Clock Out',
-  lodgment_departure:  'Lodgment Departure',
-  lodgment_return:     'Lodgment Return',
+  lodgment_departure:  'Clock In',
+  lodgment_return:     'Clock Out',
 };
 
 const DRIVER_EVENT_COLORS = {
@@ -321,24 +325,33 @@ function filterDrivers() {
 function renderDriverTable(rows) {
   const tbody = document.getElementById('drivers-body');
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No records found for the selected date / filter.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No records found for the selected date / filter.</td></tr>';
     return;
   }
   tbody.innerHTML = rows.map((r, i) => {
-    const time = new Date(r.clocked_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-    const gps  = (r.latitude && r.longitude)
-      ? `<a href="https://maps.google.com/?q=${r.latitude},${r.longitude}" target="_blank" style="color:var(--primary);text-decoration:none">${r.latitude.toFixed(5)}, ${r.longitude.toFixed(5)} ↗</a>`
-      : '<span style="color:var(--muted)">—</span>';
-    const acc  = r.accuracy ? `±${Math.round(r.accuracy)}m` : '—';
-    const color = DRIVER_EVENT_COLORS[r.event_type] || '#64748b';
-    const label = DRIVER_EVENT_LABELS[r.event_type] || r.event_type;
-    return `<tr>
+    const time   = new Date(r.clocked_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+    const mapsLink = (r.latitude && r.longitude)
+      ? `https://maps.google.com/?q=${r.latitude},${r.longitude}` : null;
+    const gps = r.gps_address
+      ? `<span title="${r.latitude?.toFixed(5)}, ${r.longitude?.toFixed(5)}">${esc(r.gps_address)}</span>${mapsLink ? ` <a href="${mapsLink}" target="_blank" style="color:var(--primary)">↗</a>` : ''}`
+      : mapsLink
+        ? `<a href="${mapsLink}" target="_blank" style="color:var(--primary);text-decoration:none">${r.latitude.toFixed(5)}, ${r.longitude.toFixed(5)} ↗</a>`
+        : '<span style="color:var(--muted)">—</span>';
+    const acc    = r.accuracy ? `±${Math.round(r.accuracy)}m` : '—';
+    const color  = DRIVER_EVENT_COLORS[r.event_type] || '#64748b';
+    const label  = DRIVER_EVENT_LABELS[r.event_type] || r.event_type;
+    const branch = r.branch ? `<span style="font-size:0.75rem;background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:100px;font-weight:600">${esc(r.branch)}</span>` : '<span style="color:var(--muted)">—</span>';
+    return `<tr id="clocking-row-${r.id}">
       <td style="color:var(--muted)">${i + 1}</td>
       <td><strong>${esc(r.driver_name)}</strong></td>
+      <td>${branch}</td>
       <td><span style="color:${color};font-weight:600">${label}</span></td>
       <td style="color:var(--muted)">${time}</td>
       <td>${gps}</td>
       <td style="color:var(--muted)">${acc}</td>
+      <td><button onclick="deleteClocking(${r.id},'drivers')" title="Delete record"
+          style="background:none;border:none;color:#fca5a5;cursor:pointer;font-size:1rem;padding:2px 6px"
+          onmouseover="this.style.color='#dc2626'" onmouseout="this.style.color='#fca5a5'">✕</button></td>
     </tr>`;
   }).join('');
 }
@@ -352,7 +365,7 @@ function renderDriverStats(rows) {
     <div class="stat-chip"><span>Drivers</span><strong>${drivers}</strong></div>
     <div class="stat-chip success"><span>Clock-Ins</span><strong>${counts.clock_in || 0}</strong></div>
     <div class="stat-chip"><span>Clock-Outs</span><strong>${counts.clock_out || 0}</strong></div>
-    <div class="stat-chip"><span>Lodgment Events</span><strong>${(counts.lodgment_departure || 0) + (counts.lodgment_return || 0)}</strong></div>
+    <div class="stat-chip"><span>Clock Events</span><strong>${(counts.lodgment_departure || 0) + (counts.lodgment_return || 0)}</strong></div>
   `;
 }
 
@@ -361,6 +374,122 @@ function updateExportLink() {
   const btn    = document.getElementById('export-drivers-btn');
   if (!btn) return;
   btn.href = `/api/admin/driver-clockings/export${date ? '?date=' + date : ''}`;
+}
+
+// ── Delete clocking ───────────────────────────────────
+
+async function deleteClocking(id, context) {
+  if (!confirm('Delete this record? This cannot be undone.')) return;
+  const res = await fetch(`/api/driver/clockings/${id}`, { method: 'DELETE' });
+  if (res.ok) {
+    const row = document.getElementById(`clocking-row-${id}`);
+    if (row) row.remove();
+    if (context === 'reports') loadBranchReport();
+    else loadDriverClockings();
+  } else {
+    alert('Failed to delete. Please try again.');
+  }
+}
+
+// ── Branch Reports ────────────────────────────────────
+
+function initReports() {
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const dateEl      = document.getElementById('report-date-filter');
+  if (!dateEl.value) dateEl.value = today;
+
+  const adminBranch = sessionStorage.getItem('amenfiman_admin_branch') || 'MANAGER';
+  const isManager   = adminBranch === 'MANAGER';
+  const branchSel   = document.getElementById('report-branch-select');
+
+  if (!isManager) {
+    branchSel.value    = adminBranch;
+    branchSel.disabled = true;
+    branchSel.style.opacity = '0.75';
+  } else {
+    branchSel.disabled = false;
+    branchSel.style.opacity = '';
+  }
+
+  updateReportExportLink();
+  if (!isManager || branchSel.value) loadBranchReport();
+}
+
+async function loadBranchReport() {
+  const branch = document.getElementById('report-branch-select').value;
+  const date   = document.getElementById('report-date-filter').value;
+  updateReportExportLink();
+
+  if (!branch) return;
+
+  const params = new URLSearchParams({ branch });
+  if (date) params.set('date', date);
+
+  const res  = await fetch(`/api/admin/driver-clockings?${params}`);
+  const rows = await res.json();
+  renderReportTable(rows);
+  renderReportStats(rows, branch);
+}
+
+function renderReportTable(rows) {
+  const tbody = document.getElementById('report-body');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No records found for this branch / date.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map((r, i) => {
+    const time  = new Date(r.clocked_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+    const mapsLink2 = (r.latitude && r.longitude)
+      ? `https://maps.google.com/?q=${r.latitude},${r.longitude}` : null;
+    const gps = r.gps_address
+      ? `<span title="${r.latitude?.toFixed(5)}, ${r.longitude?.toFixed(5)}">${esc(r.gps_address)}</span>${mapsLink2 ? ` <a href="${mapsLink2}" target="_blank" style="color:var(--primary)">↗</a>` : ''}`
+      : mapsLink2
+        ? `<a href="${mapsLink2}" target="_blank" style="color:var(--primary);text-decoration:none">${r.latitude.toFixed(5)}, ${r.longitude.toFixed(5)} ↗</a>`
+        : '<span style="color:var(--muted)">—</span>';
+    const acc   = r.accuracy ? `±${Math.round(r.accuracy)}m` : '—';
+    const color = DRIVER_EVENT_COLORS[r.event_type] || '#64748b';
+    const label = DRIVER_EVENT_LABELS[r.event_type] || r.event_type;
+    const dest  = r.destination ? `<span style="color:#7c3aed;font-weight:500">📍 ${esc(r.destination)}</span>` : '<span style="color:var(--muted)">—</span>';
+    return `<tr id="clocking-row-${r.id}">
+      <td style="color:var(--muted)">${i + 1}</td>
+      <td><strong>${esc(r.driver_name)}</strong></td>
+      <td><span style="color:${color};font-weight:600">${label}</span></td>
+      <td style="color:var(--muted)">${time}</td>
+      <td>${dest}</td>
+      <td>${gps}</td>
+      <td style="color:var(--muted)">${acc}</td>
+      <td><button onclick="deleteClocking(${r.id},'reports')" title="Delete record"
+          style="background:none;border:none;color:#fca5a5;cursor:pointer;font-size:1rem;padding:2px 6px"
+          onmouseover="this.style.color='#dc2626'" onmouseout="this.style.color='#fca5a5'">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderReportStats(rows, branch) {
+  const drivers = new Set(rows.map(r => r.driver_name)).size;
+  const lodgOut = rows.filter(r => r.event_type === 'lodgment_departure').length;
+  const lodgIn  = rows.filter(r => r.event_type === 'lodgment_return').length;
+  document.getElementById('report-stats-row').innerHTML = `
+    <div class="stat-chip" style="background:#eff6ff;border-color:#bfdbfe">
+      <span>Branch</span><strong style="color:#1d4ed8">${esc(branch)}</strong>
+    </div>
+    <div class="stat-chip"><span>Drivers Active</span><strong>${drivers}</strong></div>
+    <div class="stat-chip"><span>Clock In</span><strong>${lodgOut}</strong></div>
+    <div class="stat-chip success"><span>Clock Out</span><strong>${lodgIn}</strong></div>
+    <div class="stat-chip"><span>Total Events</span><strong>${rows.length}</strong></div>
+  `;
+}
+
+function updateReportExportLink() {
+  const branch = document.getElementById('report-branch-select')?.value || '';
+  const date   = document.getElementById('report-date-filter')?.value   || '';
+  const btn    = document.getElementById('export-report-btn');
+  if (!btn) return;
+  const p = new URLSearchParams();
+  if (branch) p.set('branch', branch);
+  if (date)   p.set('date',   date);
+  btn.href = `/api/admin/driver-clockings/export?${p}`;
 }
 
 // ── Init ──────────────────────────────────────────────

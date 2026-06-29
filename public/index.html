@@ -3,11 +3,195 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Attendance Admin</title>
+  <title>AttendanceHub — Admin</title>
   <link rel="stylesheet" href="/style.css" />
+  <style>
+    #login-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: linear-gradient(160deg, #1e3a8a 0%, #1e40af 100%);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .login-box {
+      background: #fff; border-radius: 20px; padding: 40px 36px;
+      width: 100%; max-width: 380px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+      text-align: center;
+    }
+    .login-logo { font-size: 2.6rem; margin-bottom: 8px; }
+    .login-title { font-size: 1.45rem; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+    .login-sub { font-size: 0.85rem; color: #64748b; margin-bottom: 28px; }
+    .login-input {
+      width: 100%; padding: 13px 16px; border-radius: 12px;
+      border: 2px solid #e2e8f0; font-size: 1rem; outline: none;
+      margin-bottom: 14px; transition: border-color 0.15s;
+      -webkit-appearance: none;
+    }
+    .login-input:focus { border-color: #1e40af; }
+    .login-btn {
+      width: 100%; padding: 14px; border-radius: 12px; border: none;
+      background: #1e40af; color: #fff; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .login-btn:hover { background: #1e3a8a; }
+    .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .login-error {
+      color: #dc2626; font-size: 0.82rem; margin-top: 10px;
+      min-height: 18px;
+    }
+    .login-driver-link {
+      margin-top: 24px; font-size: 0.8rem; color: #94a3b8;
+    }
+    .login-driver-link a { color: #1e40af; font-weight: 600; text-decoration: none; }
+    .login-driver-link a:hover { text-decoration: underline; }
+    .login-select {
+      width: 100%; padding: 13px 16px; border-radius: 12px;
+      border: 2px solid #e2e8f0; font-size: 1rem; outline: none;
+      margin-bottom: 14px; transition: border-color 0.15s;
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 14px center;
+      -webkit-appearance: none; cursor: pointer; color: #0f172a;
+    }
+    .login-select:focus { border-color: #1e40af; }
+    .login-select.unset { color: #94a3b8; }
+    .login-forgot {
+      margin-top: 12px; font-size: 0.8rem; color: #94a3b8;
+      cursor: pointer; background: none; border: none;
+      text-decoration: underline; width: 100%;
+    }
+    .login-forgot:hover { color: #64748b; }
+
+    /* ── Create account / Forgot password overlays ────── */
+    #create-account-screen, #forgot-pw-screen {
+      position: fixed; inset: 0; z-index: 10000;
+      background: linear-gradient(160deg, #1e3a8a 0%, #1e40af 100%);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    #create-account-screen.hidden, #forgot-pw-screen.hidden { display: none !important; }
+
+    .flow-card {
+      background: #fff; border-radius: 20px; padding: 40px 36px;
+      width: 100%; max-width: 400px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+      text-align: center;
+    }
+    .flow-card .fc-icon  { font-size: 2.4rem; margin-bottom: 10px; }
+    .flow-card .fc-title { font-size: 1.3rem; font-weight: 800; color: #0f172a; margin-bottom: 6px; }
+    .flow-card .fc-sub   { font-size: 0.83rem; color: #64748b; margin-bottom: 26px; line-height: 1.5; }
+    .flow-card .fc-label { font-size: 0.78rem; font-weight: 600; color: #475569; text-align: left; margin-bottom: 6px; display: block; }
+    .flow-card .fc-input {
+      width: 100%; padding: 13px 16px; border-radius: 12px;
+      border: 2px solid #e2e8f0; font-size: 1rem; outline: none;
+      margin-bottom: 14px; transition: border-color 0.15s; -webkit-appearance: none;
+    }
+    .flow-card .fc-input:focus { border-color: #1e40af; }
+    .flow-card .fc-btn {
+      width: 100%; padding: 14px; border-radius: 12px; border: none;
+      background: #1e40af; color: #fff; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: background 0.15s; margin-top: 4px;
+    }
+    .flow-card .fc-btn:hover { background: #1e3a8a; }
+    .flow-card .fc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .flow-card .fc-error { color: #dc2626; font-size: 0.82rem; margin-top: 8px; min-height: 18px; }
+    .flow-card .fc-back  {
+      margin-top: 16px; font-size: 0.8rem; color: #94a3b8;
+      background: none; border: none; cursor: pointer; text-decoration: underline;
+    }
+    .flow-card .fc-back:hover { color: #64748b; }
+    .fc-strength { height: 4px; border-radius: 2px; margin-bottom: 14px; transition: background 0.2s, width 0.2s; background: #e2e8f0; }
+    .fc-strength-text { font-size: 0.75rem; text-align: left; margin-top: -10px; margin-bottom: 14px; color: #94a3b8; }
+  </style>
 </head>
 <body>
-  <div class="layout">
+
+<!-- ── Login screen ─────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">✓</div>
+    <div class="login-title">AttendanceHub</div>
+    <div class="login-sub">Administrator access only</div>
+    <input id="login-name" class="login-input" type="text" placeholder="Your full name"
+           autocomplete="name" autocapitalize="words" />
+    <select id="login-branch" class="login-select unset" onchange="this.classList.remove('unset')">
+      <option value="" disabled selected>Select branch / role</option>
+      <option>WASSA AKROPONG</option><option>NKOSUOFIE</option><option>PRESTEA</option>
+      <option>ENCHI</option><option>DUNKWA</option><option>SAMREBOI</option>
+      <option>BAWDIE</option><option>TAMSO</option><option>AKROPONG HIGH</option>
+      <option>MICROFINANCE</option><option>ASANKO HIGH</option><option>SANTASI</option>
+      <option>DWENASE</option><option>ABREPO</option><option>SUAME</option>
+      <option>BEKWAI</option><option>ADUM PZ</option><option>TARKWA MAIN</option>
+      <option>GYAPA</option><option>MANSO</option><option>HEADOFFICE</option>
+      <option value="MANAGER">MANAGER (All Branches)</option>
+    </select>
+    <input id="login-password" class="login-input" type="password"
+           placeholder="Password" autocomplete="current-password" />
+    <button id="login-btn" class="login-btn" onclick="doLogin()">Sign In</button>
+    <div id="login-error" class="login-error"></div>
+    <div style="display:flex;justify-content:space-between;margin-top:10px">
+      <button class="login-forgot" onclick="showCreateAccount()">New admin? Create account</button>
+      <button class="login-forgot" onclick="showForgotPw()">Forgot password?</button>
+    </div>
+    <div class="login-driver-link">
+      Are you a driver? <a href="/driver">Open Driver App</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── Create account screen ─────────────────────────── -->
+<div id="create-account-screen" class="hidden">
+  <div class="flow-card">
+    <div class="fc-icon">👤</div>
+    <div class="fc-title">Create Admin Account</div>
+    <div class="fc-sub">Register your name and set a password.<br>You'll need the master key from your manager.</div>
+
+    <label class="fc-label">Full name</label>
+    <input id="ca-name" class="fc-input" type="text" placeholder="Your full name"
+           autocomplete="name" autocapitalize="words" />
+
+    <label class="fc-label">Password</label>
+    <input id="ca-pw" class="fc-input" type="password" placeholder="Min. 6 characters"
+           autocomplete="new-password" oninput="caStrength()" />
+    <div id="ca-strength-bar" class="fc-strength" style="width:100%"></div>
+    <div id="ca-strength-text" class="fc-strength-text"></div>
+
+    <label class="fc-label">Confirm password</label>
+    <input id="ca-confirm" class="fc-input" type="password" placeholder="Re-enter password"
+           autocomplete="new-password" />
+
+    <label class="fc-label">Master key</label>
+    <input id="ca-master" class="fc-input" type="password" placeholder="Enter master key" />
+
+    <button id="ca-btn" class="fc-btn" onclick="submitCreateAccount()">Create Account</button>
+    <div id="ca-error" class="fc-error"></div>
+    <button class="fc-back" onclick="hideCreateAccount()">← Back to Login</button>
+  </div>
+</div>
+
+<!-- ── Forgot password screen ────────────────────────── -->
+<div id="forgot-pw-screen" class="hidden">
+  <div class="flow-card">
+    <div class="fc-icon">🔑</div>
+    <div class="fc-title">Reset Password</div>
+    <div class="fc-sub">Enter your name, master key, and a new password.</div>
+
+    <label class="fc-label">Your name</label>
+    <input id="fp-name" class="fc-input" type="text" placeholder="Your full name"
+           autocapitalize="words" />
+
+    <label class="fc-label">New password</label>
+    <input id="fp-new-pw" class="fc-input" type="password" placeholder="Min. 6 characters"
+           autocomplete="new-password" />
+
+    <label class="fc-label">Master key</label>
+    <input id="fp-master" class="fc-input" type="password" placeholder="Enter master key" />
+
+    <button id="fp-btn" class="fc-btn" onclick="submitForgotPw()">Reset Password</button>
+    <div id="fp-error" class="fc-error"></div>
+    <button class="fc-back" onclick="hideForgotPw()">← Back to Login</button>
+  </div>
+</div>
+
+  <div class="layout" id="admin-layout" style="display:none">
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="brand">
@@ -15,9 +199,12 @@
         <span>AttendanceHub</span>
       </div>
       <nav>
-        <button class="nav-btn active" onclick="showSection('events')">Events</button>
-        <button class="nav-btn" onclick="showSection('participants')">Participants</button>
-        <button class="nav-btn" onclick="showSection('drivers')">🚛 Drivers</button>
+        <button id="nav-events"   class="nav-btn active" onclick="showSection('events')">Events</button>
+        <button id="nav-participants" class="nav-btn" onclick="showSection('participants')">Participants</button>
+        <button id="nav-drivers"  class="nav-btn" onclick="showSection('drivers')">🚛 Drivers</button>
+        <button id="nav-reports"  class="nav-btn" onclick="showSection('reports')">📊 Branch Reports</button>
+        <div id="nav-branch-badge" style="display:none;padding:8px 12px;margin:4px 0;background:rgba(255,255,255,0.12);border-radius:8px;font-size:0.75rem;color:#c7d2fe;font-weight:600;letter-spacing:0.03em"></div>
+        <button class="nav-btn" onclick="doLogout()" style="margin-top:auto;opacity:0.65;font-size:0.8rem">Sign Out</button>
       </nav>
     </aside>
 
@@ -96,14 +283,65 @@
               <tr>
                 <th>#</th>
                 <th>Driver</th>
+                <th>Branch</th>
                 <th>Event</th>
                 <th>Time</th>
                 <th>GPS Location</th>
                 <th>Accuracy</th>
+                <th></th>
               </tr>
             </thead>
             <tbody id="drivers-body">
-              <tr><td colspan="6" class="empty-state">Loading…</td></tr>
+              <tr><td colspan="8" class="empty-state">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Reports Section -->
+      <section id="section-reports" class="hidden">
+        <div class="page-header">
+          <h1>Branch Reports</h1>
+          <div class="actions-row">
+            <a id="export-report-btn" class="btn btn-outline" href="#">Export CSV</a>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:20px">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <select id="report-branch-select" class="search-input" style="flex:1;min-width:180px;margin-bottom:0" onchange="loadBranchReport()">
+              <option value="" disabled selected>Select a branch…</option>
+              <option>WASSA AKROPONG</option><option>NKOSUOFIE</option><option>PRESTEA</option>
+              <option>ENCHI</option><option>DUNKWA</option><option>SAMREBOI</option>
+              <option>BAWDIE</option><option>TAMSO</option><option>AKROPONG HIGH</option>
+              <option>MICROFINANCE</option><option>ASANKO HIGH</option><option>SANTASI</option>
+              <option>DWENASE</option><option>ABREPO</option><option>SUAME</option>
+              <option>BEKWAI</option><option>ADUM PZ</option><option>TARKWA MAIN</option>
+              <option>GYAPA</option><option>MANSO</option><option>HEADOFFICE</option>
+              <option>MANAGER</option>
+            </select>
+            <input type="date" id="report-date-filter" class="search-input" style="width:auto;margin-bottom:0" onchange="loadBranchReport()" />
+          </div>
+        </div>
+
+        <div class="stats-row" id="report-stats-row"></div>
+
+        <div class="card">
+          <table class="table" id="report-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Driver</th>
+                <th>Event</th>
+                <th>Time</th>
+                <th>Destination</th>
+                <th>GPS</th>
+                <th>Accuracy</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="report-body">
+              <tr><td colspan="8" class="empty-state">Select a branch above to view its report</td></tr>
             </tbody>
           </table>
         </div>
@@ -166,6 +404,231 @@
 
   <!-- Toast -->
   <div id="toast" class="toast hidden"></div>
+
+<script>
+  (function () {
+    const KEY        = 'amenfiman_admin_auth';
+    const BRANCH_KEY = 'amenfiman_admin_branch';
+    const NAME_KEY   = 'amenfiman_admin_name';
+
+    function isAuthed() { return sessionStorage.getItem(KEY) === '1'; }
+
+    function applyBranchRole(branch) {
+      const isManager = branch === 'MANAGER';
+      ['nav-events','nav-participants','nav-drivers'].forEach(id => {
+        document.getElementById(id).style.display = isManager ? '' : 'none';
+      });
+      const badge = document.getElementById('nav-branch-badge');
+      if (!isManager) { badge.style.display = ''; badge.textContent = branch; }
+      else             { badge.style.display = 'none'; }
+    }
+
+    function showAdmin() {
+      ['login-screen','create-account-screen','forgot-pw-screen'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.style.display = 'none'; el.classList.add('hidden'); }
+      });
+      document.getElementById('admin-layout').style.display = '';
+      const branch    = sessionStorage.getItem(BRANCH_KEY) || 'MANAGER';
+      const adminName = sessionStorage.getItem(NAME_KEY)   || '';
+      applyBranchRole(branch);
+      // Show name in sidebar badge area
+      const badge = document.getElementById('nav-branch-badge');
+      if (adminName) {
+        badge.style.display = '';
+        badge.innerHTML = (branch === 'MANAGER')
+          ? `<span style="font-size:0.7rem;opacity:0.7">Signed in as</span><br>${adminName}`
+          : `${adminName}<br><span style="font-weight:400;opacity:0.75">${branch}</span>`;
+      }
+      if (branch !== 'MANAGER') showSection('reports');
+    }
+
+    if (isAuthed()) { showAdmin(); }
+
+    // ── Login ──────────────────────────────────────────────
+    const nameInput   = document.getElementById('login-name');
+    const pwInput     = document.getElementById('login-password');
+    const branchInput = document.getElementById('login-branch');
+
+    pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') branchInput.focus(); });
+
+    window.doLogin = async function () {
+      const btn    = document.getElementById('login-btn');
+      const err    = document.getElementById('login-error');
+      const name   = nameInput.value.trim();
+      const pw     = pwInput.value.trim();
+      const branch = branchInput.value;
+      if (!name)   { err.textContent = 'Please enter your name.'; nameInput.focus(); return; }
+      if (!branch) { err.textContent = 'Please select your branch or role.'; return; }
+      if (!pw)     { err.textContent = 'Please enter your password.'; pwInput.focus(); return; }
+      btn.disabled = true; err.textContent = '';
+      try {
+        const res  = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, password: pw }),
+        });
+        const json = await res.json();
+        if (res.status === 404) {
+          err.textContent = 'No account found for that name. Create one below.';
+          btn.disabled = false;
+          return;
+        }
+        if (!res.ok) {
+          err.textContent = 'Incorrect password. Please try again.';
+          pwInput.value = ''; pwInput.focus();
+          btn.disabled = false;
+          return;
+        }
+        sessionStorage.setItem(KEY,        '1');
+        sessionStorage.setItem(BRANCH_KEY, branch);
+        sessionStorage.setItem(NAME_KEY,   json.name || name);
+        showAdmin();
+      } catch {
+        err.textContent = 'Connection error. Please try again.';
+        btn.disabled = false;
+      }
+    };
+
+    // ── Create account ──────────────────────────────────────
+    window.showCreateAccount = function () {
+      document.getElementById('ca-name').value    = nameInput.value.trim();
+      document.getElementById('ca-pw').value      = '';
+      document.getElementById('ca-confirm').value = '';
+      document.getElementById('ca-master').value  = '';
+      document.getElementById('ca-error').textContent = '';
+      document.getElementById('ca-strength-bar').style.background = '#e2e8f0';
+      document.getElementById('ca-strength-text').textContent = '';
+      document.getElementById('create-account-screen').classList.remove('hidden');
+      setTimeout(() => {
+        const n = document.getElementById('ca-name');
+        n.value ? document.getElementById('ca-pw').focus() : n.focus();
+      }, 60);
+    };
+
+    window.hideCreateAccount = function () {
+      document.getElementById('create-account-screen').classList.add('hidden');
+    };
+
+    window.caStrength = function () {
+      const pw  = document.getElementById('ca-pw').value;
+      const bar = document.getElementById('ca-strength-bar');
+      const txt = document.getElementById('ca-strength-text');
+      const score = (pw.length >= 6 ? 1 : 0) + (pw.length >= 10 ? 1 : 0)
+                  + /[A-Z]/.test(pw) + /\d/.test(pw) + /[^A-Za-z0-9]/.test(pw);
+      const levels = [
+        { color: '#ef4444', label: 'Very weak' }, { color: '#f97316', label: 'Weak' },
+        { color: '#eab308', label: 'Fair' },       { color: '#22c55e', label: 'Strong' },
+        { color: '#15803d', label: 'Very strong' },
+      ];
+      const lvl = levels[Math.min(score, 4)];
+      bar.style.background = pw ? lvl.color : '#e2e8f0';
+      txt.style.color = lvl.color;
+      txt.textContent = pw ? lvl.label : '';
+    };
+
+    document.getElementById('ca-confirm').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('ca-master').focus();
+    });
+    document.getElementById('ca-master').addEventListener('keydown', e => {
+      if (e.key === 'Enter') submitCreateAccount();
+    });
+
+    window.submitCreateAccount = async function () {
+      const name   = document.getElementById('ca-name').value.trim();
+      const pw     = document.getElementById('ca-pw').value;
+      const conf   = document.getElementById('ca-confirm').value;
+      const master = document.getElementById('ca-master').value.trim();
+      const err    = document.getElementById('ca-error');
+      const btn    = document.getElementById('ca-btn');
+      err.textContent = '';
+      if (!name)         { err.textContent = 'Please enter your name.'; return; }
+      if (pw.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
+      if (pw !== conf)   { err.textContent = 'Passwords do not match.'; document.getElementById('ca-confirm').value = ''; document.getElementById('ca-confirm').focus(); return; }
+      if (!master)       { err.textContent = 'Please enter the master key.'; return; }
+      btn.disabled = true;
+      try {
+        const res  = await fetch('/api/admin/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, password: pw, master_key: master }),
+        });
+        const json = await res.json();
+        if (!res.ok) { err.textContent = json.error || 'Registration failed.'; btn.disabled = false; return; }
+        // Auto-login after registration
+        nameInput.value = name;
+        pwInput.value   = pw;
+        hideCreateAccount();
+        document.getElementById('login-error').textContent = '✓ Account created! Select your branch and sign in.';
+        document.getElementById('login-error').style.color = '#16a34a';
+        pwInput.focus();
+        btn.disabled = false;
+      } catch {
+        err.textContent = 'Connection error. Please try again.';
+        btn.disabled = false;
+      }
+    };
+
+    // ── Forgot password ────────────────────────────────────
+    window.showForgotPw = function () {
+      document.getElementById('fp-name').value    = nameInput.value.trim();
+      document.getElementById('fp-new-pw').value  = '';
+      document.getElementById('fp-master').value  = '';
+      document.getElementById('fp-error').textContent = '';
+      document.getElementById('forgot-pw-screen').classList.remove('hidden');
+      setTimeout(() => {
+        const n = document.getElementById('fp-name');
+        n.value ? document.getElementById('fp-new-pw').focus() : n.focus();
+      }, 60);
+    };
+
+    window.hideForgotPw = function () {
+      document.getElementById('forgot-pw-screen').classList.add('hidden');
+    };
+
+    document.getElementById('fp-master').addEventListener('keydown', e => {
+      if (e.key === 'Enter') submitForgotPw();
+    });
+
+    window.submitForgotPw = async function () {
+      const name   = document.getElementById('fp-name').value.trim();
+      const newPw  = document.getElementById('fp-new-pw').value.trim();
+      const master = document.getElementById('fp-master').value.trim();
+      const err    = document.getElementById('fp-error');
+      const btn    = document.getElementById('fp-btn');
+      if (!name)         { err.textContent = 'Please enter your name.'; return; }
+      if (newPw.length < 6) { err.textContent = 'New password must be at least 6 characters.'; return; }
+      if (!master)       { err.textContent = 'Please enter the master key.'; return; }
+      btn.disabled = true; err.textContent = '';
+      try {
+        const res = await fetch('/api/admin/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, new_password: newPw, master_key: master }),
+        });
+        const json = await res.json();
+        if (!res.ok) { err.textContent = json.error || 'Reset failed.'; document.getElementById('fp-master').value = ''; btn.disabled = false; return; }
+        hideForgotPw();
+        nameInput.value = name; pwInput.value = '';
+        document.getElementById('login-error').textContent = '✓ Password reset. Please sign in with your new password.';
+        document.getElementById('login-error').style.color = '#16a34a';
+        pwInput.focus();
+      } catch {
+        err.textContent = 'Connection error. Please try again.';
+        btn.disabled = false;
+      }
+    };
+
+    // ── Logout ─────────────────────────────────────────────
+    window.doLogout = function () {
+      sessionStorage.removeItem(KEY);
+      sessionStorage.removeItem(BRANCH_KEY);
+      sessionStorage.removeItem(NAME_KEY);
+      location.reload();
+    };
+  })();
+</script>
 
   <script src="/app.js"></script>
 </body>
