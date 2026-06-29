@@ -299,26 +299,36 @@ function showDriverInfo(d){
 // ── Clock In ──────────────────────────────────────────────────────
 async function clockIn(){
   if (!selectedDriver) return;
-  document.getElementById('clock-in-btn').disabled = true;
+  const btn = document.getElementById('clock-in-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Clocking in...';
   document.getElementById('login-err').classList.add('hidden');
 
+  // Get GPS in background — don't block the request
   let lat=null, lng=null, acc=null;
+  if (navigator.geolocation) {
+    try {
+      const pos = await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:5000,enableHighAccuracy:true}));
+      lat=pos.coords.latitude; lng=pos.coords.longitude; acc=pos.coords.accuracy;
+      currentLat=lat; currentLng=lng; lastLat=lat; lastLng=lng;
+    } catch(e){ console.warn('GPS skipped:', e.message); }
+  }
+
   try {
-    const pos = await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:8000,enableHighAccuracy:true}));
-    lat=pos.coords.latitude; lng=pos.coords.longitude; acc=pos.coords.accuracy;
-    currentLat=lat; currentLng=lng; lastLat=lat; lastLng=lng;
-  } catch(e){ console.warn('GPS unavailable'); }
+    const res = await fetch('/api/driver/clock',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({driver_name:selectedDriver.n, vehicle_number:selectedDriver.v, event_type:'clock_in', branch:selectedBranch, latitude:lat, longitude:lng, accuracy:acc, km_consumed:0})
+    });
+    const data = await res.json();
+    if (!res.ok){ showErr(data.error||'Server error. Please try again.'); btn.disabled=false; btn.textContent='🟢 CLOCK IN'; return; }
 
-  const res = await fetch('/api/driver/clock',{
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({driver_name:selectedDriver.n, vehicle_number:selectedDriver.v, event_type:'clock_in', branch:selectedBranch, latitude:lat, longitude:lng, accuracy:acc, km_consumed:0})
-  });
-  const data = await res.json();
-  if (!res.ok){ showErr(data.error||'Clock-in failed'); document.getElementById('clock-in-btn').disabled=false; return; }
-
-  sessionId = data.id;
-  startTime = new Date();
-  totalKm = 0;
+    sessionId = data.id;
+    startTime = new Date();
+    totalKm = 0;
+  } catch(e) {
+    showErr('Network error. Check your internet connection.');
+    btn.disabled=false; btn.textContent='🟢 CLOCK IN'; return;
+  }
 
   // Save session
   localStorage.setItem('ds', JSON.stringify({id:sessionId, driver:selectedDriver, branch:selectedBranch, startTime:startTime.toISOString(), km:0}));

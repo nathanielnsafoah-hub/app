@@ -19,6 +19,23 @@ app = Flask(__name__, static_folder=PUBLIC_DIR, static_url_path="")
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
 
+# ── Run column migrations at module load (works on Vercel serverless) ─────────
+def _apply_migrations():
+    if not DATABASE_URL:
+        return
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cur = conn.cursor()
+        cur.execute("ALTER TABLE driver_clockings ADD COLUMN IF NOT EXISTS vehicle_number TEXT")
+        cur.execute("ALTER TABLE driver_clockings ADD COLUMN IF NOT EXISTS km_consumed REAL DEFAULT 0")
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[migration] {e}")
+
+_apply_migrations()
+
+
 # ── Database ──────────────────────────────────────────────────────────────────
 
 def get_db():
