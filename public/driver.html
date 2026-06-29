@@ -232,6 +232,11 @@
       <div class="dinfo-row"><span class="dinfo-icon">🚗</span><div><div class="dinfo-lbl">Vehicle</div><div class="dinfo-val" id="ci-vehicle" style="color:var(--g);letter-spacing:.06em">—</div></div></div>
       <div class="dinfo-row"><span class="dinfo-icon">📍</span><div><div class="dinfo-lbl">Branch</div><div class="dinfo-val" id="ci-branch">—</div></div></div>
     </div>
+    <div class="field" style="margin-top:4px">
+      <label style="display:block;font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">📍 From Location <span style="font-weight:400;opacity:.6">(type or wait for GPS)</span></label>
+      <input type="text" id="from-location" placeholder="e.g. Head Office, Tarkwa" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:12px;font-size:.92rem;font-weight:600;color:var(--text);outline:none" onfocus="this.style.borderColor='#15803d'" onblur="this.style.borderColor='#e2e8f0'"/>
+      <p id="gps-from-hint" style="font-size:.72rem;color:var(--muted);margin-top:4px">🛰 Detecting GPS location...</p>
+    </div>
     <div class="err" id="ci-err"></div>
     <button class="btn btn-green" id="clock-in-btn" onclick="clockIn()">🟢 CLOCK IN</button>
     <div class="links" style="margin-top:14px">
@@ -267,7 +272,12 @@
       <div class="irow"><span class="ikey">Vehicle</span><span class="ival" id="s-info-vehicle" style="color:var(--g)">—</span></div>
       <div class="irow"><span class="ikey">Branch</span><span class="ival" id="s-info-branch">—</span></div>
     </div>
-    <textarea id="notes" rows="2" placeholder="Notes (optional)..."></textarea>
+    <div style="margin-bottom:10px">
+      <label style="display:block;font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">📍 To Location <span style="font-weight:400;opacity:.6">(type or wait for GPS)</span></label>
+      <input type="text" id="to-location" placeholder="e.g. Prestea Branch, Customer site" style="width:100%;padding:12px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:.92rem;font-weight:600;color:#0f172a;outline:none;margin-bottom:6px" onfocus="this.style.borderColor='#15803d'" onblur="this.style.borderColor='#e2e8f0'"/>
+      <p id="gps-to-hint" style="font-size:.72rem;color:#64748b">🛰 GPS location will be recorded automatically</p>
+    </div>
+    <textarea id="notes" rows="2" placeholder="Additional notes (optional)..." style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:.88rem;font-weight:600;color:#0f172a;resize:none;margin-bottom:12px;outline:none"></textarea>
     <button class="btn btn-red" onclick="clockOut()">🔴 CLOCK OUT</button>
     <div class="links">
       <a href="/driver-mytrips">📋 My Trips</a>
@@ -427,6 +437,16 @@ async function saveNewPin(newPin){
   goToClockIn();
 }
 
+/* ── Reverse geocode GPS → address ──────────────────────── */
+async function reverseGeocode(lat,lng){
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,{headers:{'Accept-Language':'en'}});
+    const d=await r.json();
+    const a=d.address||{};
+    return [a.road||a.suburb||'',a.city||a.town||a.village||a.county||'',a.country||''].filter(Boolean).join(', ');
+  }catch(e){return '';}
+}
+
 /* ── Clock-in screen ─────────────────────────────────────── */
 function goToClockIn(){
   document.getElementById('ci-name').textContent=driver.n;
@@ -435,7 +455,23 @@ function goToClockIn(){
   document.getElementById('ci-err').classList.remove('show');
   document.getElementById('clock-in-btn').disabled=false;
   document.getElementById('clock-in-btn').textContent='🟢 CLOCK IN';
+  document.getElementById('from-location').value='';
+  document.getElementById('gps-from-hint').textContent='🛰 Detecting GPS location...';
   show('step-clockin');
+  // Save driver session to sessionStorage so My Trips can read it
+  sessionStorage.setItem('driverSession', JSON.stringify({driver, branch}));
+  // Try to auto-fill from-location from GPS
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      const addr=await reverseGeocode(pos.coords.latitude,pos.coords.longitude);
+      if(addr && !document.getElementById('from-location').value){
+        document.getElementById('from-location').value=addr;
+        document.getElementById('gps-from-hint').textContent='📍 GPS location detected — you can edit if needed';
+      }else{
+        document.getElementById('gps-from-hint').textContent='📍 Type your starting location';
+      }
+    },()=>{document.getElementById('gps-from-hint').textContent='📍 Type your starting location';},{timeout:6000});
+  }
 }
 
 /* ── Clock In ────────────────────────────────────────────── */
@@ -447,11 +483,15 @@ async function clockIn(){
     try{const p=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:5000,enableHighAccuracy:true}));lat=p.coords.latitude;lng=p.coords.longitude;acc=p.coords.accuracy;currentLat=lat;currentLng=lng;lastLat=lat;lastLng=lng;}catch(e){}
   }
   try{
-    const res=await fetch('/api/driver/clock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({driver_name:driver.n,vehicle_number:driver.v,event_type:'clock_in',branch,latitude:lat,longitude:lng,accuracy:acc,km_consumed:0})});
+    const fromLocation = document.getElementById('from-location').value.trim();
+    // Also get GPS address for audit trail
+    let gpsAddress='';
+    if(lat) gpsAddress=await reverseGeocode(lat,lng);
+    const res=await fetch('/api/driver/clock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({driver_name:driver.n,vehicle_number:driver.v,event_type:'clock_in',branch,latitude:lat,longitude:lng,accuracy:acc,km_consumed:0,destination:fromLocation,gps_address:gpsAddress||fromLocation})});
     const data=await res.json();
     if(!res.ok){document.getElementById('ci-err').textContent=data.error||'Clock-in failed';document.getElementById('ci-err').classList.add('show');btn.disabled=false;btn.textContent='🟢 CLOCK IN';return;}
     startTime=new Date();totalKm=0;
-    localStorage.setItem('ds',JSON.stringify({driver,branch,startTime:startTime.toISOString(),km:0}));
+    localStorage.setItem('ds',JSON.stringify({driver,branch,startTime:startTime.toISOString(),km:0,fromLocation}));
     startActiveSession();
   }catch(e){
     document.getElementById('ci-err').textContent='Network error. Please try again.';
@@ -480,20 +520,30 @@ function startActiveSession(){
 
 function startGPS(){
   if(!navigator.geolocation){document.getElementById('gps-status').textContent='GPS not available';return;}
-  watchId=navigator.geolocation.watchPosition(pos=>{
+  watchId=navigator.geolocation.watchPosition(async pos=>{
     const{latitude:la,longitude:lo,accuracy:ac}=pos.coords;
     document.getElementById('gps-status').textContent=`GPS ±${Math.round(ac)}m`;
     currentLat=la;currentLng=lo;
     if(lastLat!==null){const d=hav(lastLat,lastLng,la,lo);if(d>0.01){totalKm=parseFloat((totalKm+d).toFixed(3));document.getElementById('km-val').textContent=totalKm.toFixed(2);}}
     lastLat=la;lastLng=lo;
-    const s=JSON.parse(localStorage.getItem('ds')||'{}');if(s.driver)localStorage.setItem('ds',JSON.stringify({...s,km:totalKm}));
+    const s=JSON.parse(localStorage.getItem('ds')||'{}');if(s.driver)localStorage.setItem('ds',JSON.stringify({...s,km:totalKm,outLat:la,outLng:lo}));
+    // Auto-fill "To Location" from GPS (only once and only if empty)
+    const toField=document.getElementById('to-location');
+    if(toField&&!toField.value){
+      const addr=await reverseGeocode(la,lo);
+      if(addr){toField.value=addr;document.getElementById('gps-to-hint').textContent='📍 GPS location detected — you can edit if needed';}
+    }
   },e=>{document.getElementById('gps-status').textContent='GPS: '+e.message;},{enableHighAccuracy:true,maximumAge:5000,timeout:10000});
 }
 
 /* ── Clock Out ───────────────────────────────────────────── */
 async function clockOut(){
+  const toLocation=document.getElementById('to-location').value.trim();
   const notes=document.getElementById('notes').value.trim();
-  await fetch('/api/driver/clock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({driver_name:driver.n,vehicle_number:driver.v,event_type:'clock_out',branch,latitude:currentLat,longitude:currentLng,km_consumed:totalKm,destination:notes})});
+  const combined=[toLocation,notes].filter(Boolean).join(' | ');
+  let gpsAddress='';
+  if(currentLat) gpsAddress=await reverseGeocode(currentLat,currentLng);
+  await fetch('/api/driver/clock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({driver_name:driver.n,vehicle_number:driver.v,event_type:'clock_out',branch,latitude:currentLat,longitude:currentLng,km_consumed:totalKm,destination:combined||undefined,gps_address:gpsAddress||toLocation||undefined})});
   if(watchId!==null)navigator.geolocation.clearWatch(watchId);
   clearInterval(durTimer);
   localStorage.removeItem('ds');
