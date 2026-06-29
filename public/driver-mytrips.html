@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>My Trips — Driver Log</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0fdf4;min-height:100vh}
+    .header{background:linear-gradient(135deg,#14532d,#15803d);color:#fff;padding:18px 20px;display:flex;justify-content:space-between;align-items:center}
+    .header h1{font-size:1.2rem;font-weight:900}
+    .header p{font-size:.78rem;opacity:.7;margin-top:2px}
+    .header a{background:rgba(255,255,255,.2);color:#fff;padding:8px 14px;border-radius:10px;text-decoration:none;font-weight:700;font-size:.82rem}
+    /* PIN gate */
+    #pin-gate{min-height:100vh;background:linear-gradient(160deg,#14532d,#15803d);display:flex;align-items:center;justify-content:center;padding:24px}
+    .pin-card{background:#fff;border-radius:22px;padding:24px;width:100%;max-width:360px;box-shadow:0 8px 40px rgba(0,0,0,.2);text-align:center}
+    .pin-card img{width:64px;height:64px;object-fit:contain;border-radius:12px;background:#fff;padding:4px;box-shadow:0 2px 10px rgba(0,0,0,.12);margin-bottom:12px}
+    .pin-card h2{font-size:1.1rem;font-weight:900;color:#0f172a;margin-bottom:4px}
+    .pin-card p{font-size:.82rem;color:#64748b;margin-bottom:16px}
+    .pin-field{margin-bottom:12px;text-align:left}
+    .pin-field label{display:block;font-size:.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+    select,input{width:100%;padding:12px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:.95rem;font-weight:600;color:#0f172a;background:#fff;outline:none;-webkit-appearance:none}
+    select:focus,input:focus{border-color:#15803d}
+    input[type=password]{letter-spacing:.2em;font-size:1.2rem}
+    .btn{width:100%;padding:14px;border:none;border-radius:12px;font-weight:800;font-size:1rem;cursor:pointer;background:#15803d;color:#fff;margin-top:4px}
+    .btn:hover{background:#14532d}
+    .err{color:#dc2626;font-size:.83rem;font-weight:700;margin-top:8px;padding:8px;background:#fff1f2;border-radius:8px;display:none}
+    .err.show{display:block}
+    /* Trips content */
+    #content{display:none}
+    .filters{background:#fff;border-bottom:1px solid #e2e8f0;padding:14px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+    .filters label{font-size:.7rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:4px}
+    .filters input{border:2px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:.9rem;font-weight:600;color:#0f172a;width:auto}
+    .filters button{background:#15803d;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-weight:800;cursor:pointer;font-size:.83rem}
+    .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px 20px}
+    .scard{background:#fff;border-radius:14px;border:2px solid #e2e8f0;padding:14px;text-align:center}
+    .scard.green{background:#f0fdf4;border-color:#bbf7d0}
+    .scard.purple{background:#f5f3ff;border-color:#ddd6fe}
+    .scard .sl{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:4px}
+    .scard .sv{font-size:1.4rem;font-weight:900;color:#0f172a}
+    .trips{padding:0 20px 32px}
+    .trip{background:#fff;border-radius:16px;border:2px solid #e2e8f0;padding:16px;margin-bottom:12px}
+    .trip-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+    .trip-date{font-size:.78rem;font-weight:700;color:#64748b}
+    .trip-badge{font-size:.72rem;font-weight:800;padding:3px 10px;border-radius:20px}
+    .done{background:#dcfce7;color:#15803d}
+    .ongoing{background:#fef9c3;color:#92400e}
+    .trip-row{display:flex;justify-content:space-between;padding:4px 0;font-size:.85rem}
+    .trip-key{color:#64748b;font-weight:600}
+    .trip-val{font-weight:800;color:#0f172a}
+    .km-big{font-size:1.3rem;font-weight:900;color:#7c3aed}
+    .loc-btn{font-size:.75rem;padding:3px 8px;border-radius:6px;text-decoration:none;font-weight:700;background:#eff6ff;color:#1d4ed8}
+    .empty{text-align:center;padding:40px 20px;color:#94a3b8}
+    .empty .icon{font-size:3rem;margin-bottom:12px}
+  </style>
+</head>
+<body>
+
+<!-- PIN gate -->
+<div id="pin-gate">
+  <div class="pin-card">
+    <img src="/logo.jpg" alt="Amenfiman"/>
+    <h2>My Trips</h2>
+    <p>Select your branch and enter your PIN to view your trips</p>
+    <div class="pin-field">
+      <label>Branch</label>
+      <select id="g-branch" onchange="onGateBranch()">
+        <option value="">— Choose Branch —</option>
+        <option>HEAD OFFICE</option><option>MICROFINANCE</option><option>DUNKWA</option>
+        <option>SEFWI BEKWAI</option><option>SEFWIDWENASE</option><option>AKROPONG MAIN</option>
+        <option>AKROPONG HIGH</option><option>BAWDIE</option><option>TARKWA MAIN</option>
+        <option>TARKWA TAMSO</option><option>PRESTEA</option><option>MANSO AMENFI</option>
+        <option>ASANKO HIGH</option><option>ASANKO MAIN</option><option>SAMREBOI</option>
+        <option>ENCHI</option><option>DOMINASE</option>
+      </select>
+    </div>
+    <div class="pin-field hidden" id="g-driver-wrap">
+      <label>Driver</label>
+      <select id="g-driver">
+        <option value="">— Choose Driver —</option>
+      </select>
+    </div>
+    <div class="pin-field">
+      <label>Your PIN</label>
+      <input type="password" id="g-pin" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*"/>
+    </div>
+    <div class="err" id="gate-err"></div>
+    <button class="btn" onclick="gateLogin()">View My Trips →</button>
+  </div>
+</div>
+
+<!-- Trips content -->
+<div id="content">
+  <div class="header">
+    <div><h1>📋 My Trips</h1><p id="h-driver-name"></p></div>
+    <a href="/driver">← Clock In/Out</a>
+  </div>
+  <div class="filters">
+    <div><label>Date</label><input type="date" id="f-date"/></div>
+    <button onclick="loadTrips()">🔍 Load</button>
+  </div>
+  <div class="summary">
+    <div class="scard"><div class="sl">Trips</div><div class="sv" id="s-trips">0</div></div>
+    <div class="scard green"><div class="sl">Completed</div><div class="sv" id="s-done">0</div></div>
+    <div class="scard purple"><div class="sl">Total KM</div><div class="sv" id="s-km">0</div></div>
+  </div>
+  <div class="trips" id="trips-list"></div>
+</div>
+
+<script>
+const HO=[{v:'GC-5856-20',n:'DOUGLAS QUAINOO'},{v:'GW-9822-23',n:'SIMON ABLORH'},{v:'GW-4586-24',n:'MAXWELL APPIAH'},{v:'GW-9200-22',n:'DIARI MORO'},{v:'GW-2476-17',n:'PRINCE AIDOO'},{v:'GW-4416-21',n:'PATRICK ADARKWAH YIADOM'},{v:'GW-2472-17',n:'JAMES OFORI'},{v:'GW-2876-14',n:'ABRAHAM BIOH'},{v:'GT-6873-15',n:'EUGENE YENDU'},{v:'GN-1554-25',n:'DANIEL FRIMPONG'},{v:'GN-2094-12',n:'YAW ASOMANING'},{v:'GR-9200-17',n:'RANSFORD ANTWI BOASIAKO'},{v:'AS-3318-16',n:'UNKNOWN DRIVER'},{v:'GN-1015-25',n:'UNKNOWN DRIVER'}];
+const MF=[{v:'GW-2478-17',n:'SOLOMON ABEKAH',sub:'GOASO'},{v:'GW-2474-17',n:'OKINE ABDULLAI',sub:'ELUBO'},{v:'AS-5830-23',n:'UNKNOWN DRIVER',sub:'BEREKUM'}];
+const DUNKWA=[{v:'GW-9753-13',n:'FRANCIS ACHEAMPONG'},{v:'GT-8733-24',n:'FRANCIS ACHEAMPONG'}];
+const SINGLE={'SEFWI BEKWAI':{v:'GW-9424-25',n:'ALEX TAKYI'},'SEFWIDWENASE':{v:'GW-9623-25',n:'PATRICK OSEI'},'AKROPONG MAIN':{v:'GW-4903-17',n:'ADABO FRANCIS'},'AKROPONG HIGH':{v:'GW-4905-24',n:'CROSBY LARBI'},'BAWDIE':{v:'GW-2473-17',n:'MESHACK BOADI'},'TARKWA MAIN':{v:'GM-1536-16',n:'MAWULI GA'},'TARKWA TAMSO':{v:'GW-6271-17',n:'RICHARD TAKYI'},'PRESTEA':{v:'GW-2477-17',n:'EBENEZER DJANGMAH'},'MANSO AMENFI':{v:'GW-9600-25',n:'NELSON ODURO'},'ASANKO HIGH':{v:'GT-8794-17',n:'ELVIS BOATENG'},'ASANKO MAIN':{v:'GT-8431-24',n:'GEORGE MANTEY'},'SAMREBOI':{v:'GW-4464-24',n:'ROBERT NUM'},'ENCHI':{v:'GW-7920-16',n:'FRANK OFORI'},'DOMINASE':{v:'GT-876-16',n:'ISAAC BOAFO'}};
+
+let authedDriver=null;
+
+function onGateBranch(){
+  const b=document.getElementById('g-branch').value;
+  const wrap=document.getElementById('g-driver-wrap');
+  const sel=document.getElementById('g-driver');
+  sel.innerHTML='<option value="">— Choose Driver —</option>';
+  let list=null;
+  if(b==='HEAD OFFICE')list=HO;
+  else if(b==='MICROFINANCE')list=MF;
+  else if(b==='DUNKWA')list=DUNKWA;
+  if(list){list.forEach((d,i)=>sel.insertAdjacentHTML('beforeend',`<option value="${i}">${d.n}${d.sub?' ('+d.sub+')':''}</option>`));wrap.classList.remove('hidden');}
+  else wrap.classList.add('hidden');
+}
+
+function getGateDriver(){
+  const b=document.getElementById('g-branch').value;
+  if(SINGLE[b])return SINGLE[b];
+  const sel=document.getElementById('g-driver');
+  if(!sel.value)return null;
+  const list=b==='HEAD OFFICE'?HO:b==='MICROFINANCE'?MF:DUNKWA;
+  return list[parseInt(sel.value)];
+}
+
+async function gateLogin(){
+  const pin=document.getElementById('g-pin').value.trim();
+  const d=getGateDriver();
+  const err=document.getElementById('gate-err');
+  err.classList.remove('show');
+  if(!d){err.textContent='Please select your branch and name';err.classList.add('show');return;}
+  if(!pin){err.textContent='Please enter your PIN';err.classList.add('show');return;}
+  try{
+    const res=await fetch('/api/driver/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({driver_name:d.n,pin})});
+    const data=await res.json();
+    if(!res.ok){err.textContent=data.error||'Incorrect PIN';err.classList.add('show');return;}
+    authedDriver=d;
+    document.getElementById('pin-gate').style.display='none';
+    document.getElementById('content').style.display='block';
+    document.getElementById('h-driver-name').textContent=d.n+' — '+d.v;
+    document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+    loadTrips();
+  }catch(e){err.textContent='Network error. Try again.';err.classList.add('show');}
+}
+
+async function loadTrips(){
+  if(!authedDriver)return;
+  const date=document.getElementById('f-date').value;
+  const p=new URLSearchParams({driver_name:authedDriver.n});
+  if(date)p.set('date',date);
+  const res=await fetch('/api/driver/today?'+p);
+  const rows=await res.json();
+  const sessions=buildSessions(rows);
+  let totalKm=0,done=0;
+  const list=document.getElementById('trips-list');
+  list.innerHTML='';
+  if(sessions.length===0){list.innerHTML='<div class="empty"><div class="icon">🚗</div><p>No trips found for this date.</p></div>';document.getElementById('s-trips').textContent=0;document.getElementById('s-done').textContent=0;document.getElementById('s-km').textContent=0;return;}
+  sessions.forEach(s=>{
+    const km=parseFloat(s.km||0);totalKm+=km;if(s.status==='done')done++;
+    const inUrl=s.inLat?`https://maps.google.com/?q=${s.inLat},${s.inLng}`:null;
+    const outUrl=s.outLat?`https://maps.google.com/?q=${s.outLat},${s.outLng}`:null;
+    list.insertAdjacentHTML('beforeend',`
+      <div class="trip">
+        <div class="trip-header">
+          <div class="trip-date">${fmtDate(s.inTime)}</div>
+          <span class="trip-badge ${s.status==='done'?'done':'ongoing'}">${s.status==='done'?'✅ Completed':'🟢 On Duty'}</span>
+        </div>
+        <div class="trip-row"><span class="trip-key">Vehicle</span><span class="trip-val" style="color:#15803d">${authedDriver.v}</span></div>
+        <div class="trip-row"><span class="trip-key">Clock In</span><span class="trip-val">${fmt(s.inTime)}</span></div>
+        <div class="trip-row"><span class="trip-key">Clock Out</span><span class="trip-val">${fmt(s.outTime)}</span></div>
+        <div class="trip-row"><span class="trip-key">Duration</span><span class="trip-val">${dur(s.inTime,s.outTime)}</span></div>
+        <div class="trip-row"><span class="trip-key">KM Consumed</span><span class="km-big">${km.toFixed(2)} km</span></div>
+        ${s.notes?`<div class="trip-row"><span class="trip-key">Notes</span><span class="trip-val">${s.notes}</span></div>`:''}
+        <div class="trip-row" style="margin-top:4px">
+          ${inUrl?`<a class="loc-btn" href="${inUrl}" target="_blank">📍 Clock-in Location</a>`:''}
+          ${outUrl?`<a class="loc-btn" href="${outUrl}" target="_blank">📍 Clock-out Location</a>`:''}
+        </div>
+      </div>`);
+  });
+  document.getElementById('s-trips').textContent=sessions.length;
+  document.getElementById('s-done').textContent=done;
+  document.getElementById('s-km').textContent=totalKm.toFixed(1);
+}
+
+function buildSessions(rows){
+  const asc=[...rows].sort((a,b)=>new Date(a.clocked_at)-new Date(b.clocked_at));
+  const out=[];let i=0;
+  while(i<asc.length){
+    const r=asc[i];
+    if(r.event_type==='clock_in'){
+      const nx=asc[i+1];const isOut=nx&&nx.event_type==='clock_out';
+      out.push({inTime:r.clocked_at,outTime:isOut?nx.clocked_at:null,inLat:r.latitude,inLng:r.longitude,outLat:isOut?nx.latitude:null,outLng:isOut?nx.longitude:null,km:isOut?(nx.km_consumed||0):(r.km_consumed||0),notes:isOut?(nx.destination||''):(r.destination||''),status:isOut?'done':'ongoing'});
+      i+=isOut?2:1;
+    }else i++;
+  }
+  return out.reverse();
+}
+function fmt(dt){if(!dt)return '—';return new Date(dt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
+function fmtDate(dt){if(!dt)return '—';return new Date(dt).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short'});}
+function dur(i,o){if(!o)return 'On duty';const s=Math.floor((new Date(o)-new Date(i))/1000);return `${String(Math.floor(s/3600)).padStart(2,'0')}h ${String(Math.floor(s%3600/60)).padStart(2,'0')}m`;}
+</script>
+</body>
+</html>

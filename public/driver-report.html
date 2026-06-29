@@ -3,10 +3,21 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Driver Report — Amenfiman Community Bank</title>
+  <title>Driver Report — Admin</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0fdf4;color:#0f172a}
+    #admin-gate{position:fixed;inset:0;background:linear-gradient(160deg,#14532d,#15803d);display:flex;align-items:center;justify-content:center;z-index:999;padding:24px}
+    .gate-card{background:#fff;border-radius:22px;padding:28px;width:100%;max-width:360px;box-shadow:0 8px 40px rgba(0,0,0,.25);text-align:center}
+    .gate-card img{width:70px;height:70px;object-fit:contain;border-radius:14px;background:#fff;padding:4px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+    .gate-card h2{font-size:1.15rem;font-weight:900;color:#0f172a;margin-bottom:4px}
+    .gate-card p{font-size:.82rem;color:#64748b;margin-bottom:20px}
+    .gate-card input{width:100%;padding:13px 16px;border:2px solid #e2e8f0;border-radius:12px;font-size:.95rem;font-weight:600;color:#0f172a;outline:none;margin-bottom:12px}
+    .gate-card input:focus{border-color:#15803d}
+    .gate-card button{width:100%;padding:14px;background:#15803d;color:#fff;border:none;border-radius:12px;font-weight:800;font-size:1rem;cursor:pointer}
+    .gate-card button:hover{background:#14532d}
+    .gate-err{color:#dc2626;font-size:.83rem;font-weight:700;margin-top:8px;display:none}
+    .gate-err.show{display:block}
     .header{background:linear-gradient(135deg,#14532d,#15803d);color:#fff;padding:20px 24px;display:flex;justify-content:space-between;align-items:center}
     .header h1{font-size:1.3rem;font-weight:900}
     .header p{font-size:.8rem;opacity:.7;margin-top:2px}
@@ -44,6 +55,19 @@
   </style>
 </head>
 <body>
+
+<!-- Admin password gate -->
+<div id="admin-gate">
+  <div class="gate-card">
+    <img src="/logo.jpg" alt="Amenfiman"/>
+    <h2>🔐 Admin Report</h2>
+    <p>Enter the admin password to access driver reports</p>
+    <input type="password" id="admin-pw" placeholder="Admin password" onkeydown="if(event.key==='Enter')checkAdmin()"/>
+    <div class="gate-err" id="gate-err">Incorrect password. Try again.</div>
+    <button onclick="checkAdmin()">Access Report →</button>
+  </div>
+</div>
+
 <div class="header">
   <div>
     <h1>🚗 Driver Report</h1>
@@ -202,10 +226,28 @@ function exportCSV(){
   window.location='/api/admin/driver-clockings/export?'+p;
 }
 
-// Set today's date and load
+// ── Admin gate ────────────────────────────────────────────────
+const ADMIN_PW = 'Amenfiman2024';
+
+function checkAdmin(){
+  const pw = document.getElementById('admin-pw').value.trim();
+  if(pw === ADMIN_PW){
+    sessionStorage.setItem('admin_ok','1');
+    document.getElementById('admin-gate').style.display='none';
+    document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+    load();
+  } else {
+    document.getElementById('gate-err').classList.add('show');
+    document.getElementById('admin-pw').value='';
+  }
+}
+
 window.addEventListener('load',()=>{
-  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
-  load();
+  if(sessionStorage.getItem('admin_ok')==='1'){
+    document.getElementById('admin-gate').style.display='none';
+    document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+    load();
+  }
 });
 </script>
 </body>

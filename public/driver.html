@@ -11,79 +11,92 @@
   <title>Driver Log — Amenfiman Community Bank</title>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{--g:#15803d;--gd:#14532d;--gl:#dcfce7;--red:#dc2626;--blue:#1d4ed8;--purple:#7c3aed;--bg:#f0fdf4;--surface:#fff;--text:#0f172a;--muted:#64748b;--border:#e2e8f0}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:480px;margin:0 auto}
+    :root{--g:#15803d;--gd:#14532d;--gl:#dcfce7;--red:#dc2626;--blue:#1d4ed8;--amber:#d97706;--bg:#f0fdf4;--surface:#fff;--text:#0f172a;--muted:#64748b;--border:#e2e8f0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(160deg,var(--gd) 0%,var(--g) 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px}
     .hidden{display:none!important}
-    select,input,textarea{width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:14px;font-size:1rem;color:var(--text);font-weight:600;background:#fff;outline:none;transition:border-color .2s}
-    select:focus,input:focus{border-color:var(--g)}
-    button{cursor:pointer;border:none;border-radius:14px;font-weight:800;font-size:1rem;transition:opacity .2s}
-    button:disabled{opacity:.45;cursor:not-allowed}
-
-    /* ── LOGIN SCREEN ─────────────────────────────────────── */
-    #login-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;background:linear-gradient(160deg,var(--gd),var(--g));color:#fff}
-    .logo-wrap{text-align:center;margin-bottom:28px}
-    .logo-wrap img{width:90px;height:90px;object-fit:contain;border-radius:18px;background:#fff;padding:6px;box-shadow:0 4px 20px rgba(0,0,0,.3)}
-    .app-title{font-size:1.7rem;font-weight:900;letter-spacing:.04em;margin-top:12px}
-    .app-sub{font-size:.85rem;opacity:.7;margin-top:4px}
-    .card{background:#fff;border-radius:20px;padding:24px;width:100%;max-width:400px;box-shadow:0 8px 32px rgba(0,0,0,.15)}
-    .card h2{font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:20px;text-align:center}
+    .screen{width:100%;max-width:420px}
+    /* Header */
+    .header{text-align:center;margin-bottom:24px;color:#fff}
+    .header img{width:80px;height:80px;object-fit:contain;border-radius:16px;background:#fff;padding:6px;box-shadow:0 4px 20px rgba(0,0,0,.25);margin-bottom:12px}
+    .header h1{font-size:1.6rem;font-weight:900;letter-spacing:.04em}
+    .header p{font-size:.82rem;opacity:.7;margin-top:3px}
+    /* Card */
+    .card{background:#fff;border-radius:22px;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18)}
+    .card-title{font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:20px;text-align:center}
     .field{margin-bottom:16px}
     .field label{display:block;font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
-    .driver-info{background:var(--gl);border:2px solid var(--g);border-radius:14px;padding:16px;margin-bottom:16px}
-    .driver-info .di-row{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-    .driver-info .di-row:last-child{margin-bottom:0}
-    .di-icon{font-size:1.5rem}
-    .di-label{font-size:.68rem;font-weight:700;color:var(--g);text-transform:uppercase;letter-spacing:.07em}
-    .di-value{font-size:1rem;font-weight:900;color:var(--text)}
-    .btn-green{background:var(--g);color:#fff;width:100%;padding:16px;font-size:1.05rem;margin-top:4px}
+    select,input{width:100%;padding:13px 16px;border:2px solid var(--border);border-radius:12px;font-size:.95rem;color:var(--text);font-weight:600;background:#fff;outline:none;transition:border-color .2s;-webkit-appearance:none}
+    select:focus,input:focus{border-color:var(--g)}
+    /* Driver info box */
+    .dinfo{background:var(--gl);border:2px solid var(--g);border-radius:14px;padding:16px;margin-bottom:16px}
+    .dinfo-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+    .dinfo-row:last-child{margin-bottom:0}
+    .dinfo-icon{font-size:1.4rem}
+    .dinfo-lbl{font-size:.68rem;font-weight:700;color:var(--g);text-transform:uppercase;letter-spacing:.07em}
+    .dinfo-val{font-size:.98rem;font-weight:900;color:var(--text)}
+    /* PIN dots */
+    .pin-dots{display:flex;gap:12px;justify-content:center;margin:20px 0 8px}
+    .dot{width:18px;height:18px;border-radius:50%;border:2.5px solid var(--border);background:#fff;transition:all .2s}
+    .dot.filled{background:var(--g);border-color:var(--g)}
+    .pin-input{position:absolute;opacity:0;width:0;height:0}
+    .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+    .pin-key{background:#f8fafc;border:2px solid var(--border);border-radius:14px;padding:16px;font-size:1.3rem;font-weight:800;color:var(--text);cursor:pointer;text-align:center;transition:all .15s;user-select:none}
+    .pin-key:active,.pin-key.pressed{background:var(--gl);border-color:var(--g);transform:scale(.95)}
+    .pin-key.del{font-size:1.1rem;color:var(--red)}
+    .pin-key.zero{grid-column:2}
+    /* Buttons */
+    button.btn{width:100%;padding:15px;border:none;border-radius:14px;font-weight:800;font-size:1rem;cursor:pointer;transition:all .2s}
+    button.btn:disabled{opacity:.45;cursor:not-allowed}
+    .btn-green{background:var(--g);color:#fff}
     .btn-green:hover:not(:disabled){background:var(--gd)}
-    .err{color:var(--red);font-size:.85rem;text-align:center;margin-top:8px;font-weight:600}
-
-    /* ── ACTIVE SESSION SCREEN ────────────────────────────── */
-    #session-screen{padding:0 0 48px}
-    .session-header{background:linear-gradient(135deg,var(--gd),var(--g));color:#fff;padding:20px 20px 28px;position:relative}
-    .session-header h1{font-size:1.2rem;font-weight:900;letter-spacing:.03em}
-    .badge-on{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;font-size:.72rem;font-weight:800;padding:4px 10px;border-radius:20px;display:inline-block;margin-top:6px}
-    .session-body{padding:16px}
-    .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
-    .stat-card{background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:16px;text-align:center}
-    .stat-card.blue{background:#eff6ff;border-color:#bfdbfe}
-    .stat-card.purple{background:#f5f3ff;border-color:#ddd6fe}
-    .stat-label{font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
-    .stat-value{font-size:1.5rem;font-weight:900;color:var(--text)}
-    .km-card{background:linear-gradient(135deg,var(--g),#16a34a);border-radius:20px;padding:24px;text-align:center;color:#fff;margin-bottom:14px;box-shadow:0 4px 20px rgba(21,128,61,.4)}
-    .km-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.7);margin-bottom:8px}
-    .km-value{font-size:3.5rem;font-weight:900;line-height:1;letter-spacing:-.02em}
-    .km-unit{font-size:1rem;font-weight:700;opacity:.8;margin-top:4px}
-    .gps-status{font-size:.72rem;opacity:.65;margin-top:8px}
-    .info-box{background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px}
-    .info-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
-    .info-row:last-child{border-bottom:none}
-    .info-key{font-size:.8rem;font-weight:600;color:var(--muted)}
-    .info-val{font-size:.9rem;font-weight:800;color:var(--text)}
-    .btn-red{background:var(--red);color:#fff;width:100%;padding:18px;font-size:1.1rem}
+    .btn-red{background:var(--red);color:#fff}
     .btn-red:hover:not(:disabled){background:#b91c1c}
-    .notes-area{padding:10px 14px;border:2px solid var(--border);border-radius:12px;font-size:.9rem;font-weight:600;color:var(--text);resize:none;width:100%;margin-bottom:14px}
-    .notes-area:focus{border-color:var(--g);outline:none}
-    .report-link{display:block;text-align:center;margin-top:16px;color:var(--g);font-weight:700;font-size:.9rem;text-decoration:none}
-    .report-link:hover{text-decoration:underline}
+    .btn-outline{background:#fff;color:var(--g);border:2px solid var(--g)!important}
+    /* Error */
+    .err{color:var(--red);font-size:.85rem;font-weight:700;text-align:center;margin-top:8px;padding:10px;background:#fff1f2;border-radius:10px;display:none}
+    .err.show{display:block}
+    /* Session screen */
+    body.session-mode{background:var(--bg);align-items:flex-start;padding:0}
+    .session-wrap{width:100%;max-width:480px;margin:0 auto;padding-bottom:48px}
+    .sess-header{background:linear-gradient(135deg,var(--gd),var(--g));color:#fff;padding:20px;display:flex;justify-content:space-between;align-items:flex-start}
+    .sess-header h1{font-size:1.15rem;font-weight:900}
+    .on-badge{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);font-size:.72rem;font-weight:800;padding:4px 10px;border-radius:20px}
+    .sess-body{padding:16px;space-y:12px}
+    .km-card{background:linear-gradient(135deg,var(--g),#16a34a);border-radius:20px;padding:24px;text-align:center;color:#fff;margin-bottom:14px;box-shadow:0 4px 20px rgba(21,128,61,.35)}
+    .km-card .lbl{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.7);margin-bottom:8px}
+    .km-card .val{font-size:3.8rem;font-weight:900;line-height:1}
+    .km-card .unit{font-size:.95rem;font-weight:700;opacity:.8;margin-top:4px}
+    .km-card .gps{font-size:.72rem;opacity:.6;margin-top:8px}
+    .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+    .stat{background:#fff;border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center}
+    .stat.blue{background:#eff6ff;border-color:#bfdbfe}
+    .stat.purple{background:#f5f3ff;border-color:#ddd6fe}
+    .stat .sl{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px}
+    .stat .sv{font-size:1.4rem;font-weight:900}
+    .info-box{background:#fff;border:2px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px}
+    .irow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)}
+    .irow:last-child{border-bottom:none}
+    .ikey{font-size:.8rem;font-weight:600;color:var(--muted)}
+    .ival{font-size:.88rem;font-weight:800}
+    .links{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+    .links a{flex:1;text-align:center;padding:10px;background:#fff;border:2px solid var(--border);border-radius:12px;color:var(--g);font-weight:700;font-size:.82rem;text-decoration:none}
+    textarea{width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:12px;font-size:.9rem;font-weight:600;color:var(--text);resize:none;margin-bottom:14px}
+    textarea:focus{border-color:var(--g);outline:none}
   </style>
 </head>
 <body>
 
-<!-- ══ LOGIN / BRANCH SELECT SCREEN ══════════════════════════════ -->
-<div id="login-screen">
-  <div class="logo-wrap">
+<!-- ══ STEP 1: BRANCH + DRIVER ══════════════════════════════════════ -->
+<div class="screen" id="step-select">
+  <div class="header">
     <img src="/logo.jpg" alt="Amenfiman"/>
-    <div class="app-title">DRIVER LOG</div>
-    <div class="app-sub">Amenfiman Community Bank</div>
+    <h1>DRIVER LOG</h1>
+    <p>Amenfiman Community Bank</p>
   </div>
-
   <div class="card">
-    <h2>🚗 Clock In</h2>
-
+    <div class="card-title">🚗 Select Your Branch</div>
     <div class="field">
-      <label>Select Branch</label>
+      <label>Branch</label>
       <select id="branch-sel" onchange="onBranchChange()">
         <option value="">— Choose Your Branch —</option>
         <option>HEAD OFFICE</option>
@@ -105,309 +118,373 @@
         <option>DOMINASE</option>
       </select>
     </div>
-
-    <!-- Driver dropdown (HO / MF / Dunkwa) -->
-    <div class="field hidden" id="driver-select-wrap">
+    <div class="field hidden" id="driver-sel-wrap">
       <label>Select Driver</label>
       <select id="driver-sel" onchange="onDriverSelect()">
         <option value="">— Choose Driver —</option>
       </select>
     </div>
-
-    <!-- Auto-filled driver info -->
-    <div class="driver-info hidden" id="driver-info">
-      <div class="di-row">
-        <span class="di-icon">👤</span>
-        <div>
-          <div class="di-label">Driver Name</div>
-          <div class="di-value" id="di-name">—</div>
-        </div>
-      </div>
-      <div class="di-row">
-        <span class="di-icon">🚗</span>
-        <div>
-          <div class="di-label">Vehicle Number</div>
-          <div class="di-value" id="di-vehicle" style="color:var(--g);font-size:1.15rem;letter-spacing:.08em">—</div>
-        </div>
-      </div>
+    <div class="dinfo hidden" id="dinfo">
+      <div class="dinfo-row"><span class="dinfo-icon">👤</span><div><div class="dinfo-lbl">Driver</div><div class="dinfo-val" id="dinfo-name">—</div></div></div>
+      <div class="dinfo-row"><span class="dinfo-icon">🚗</span><div><div class="dinfo-lbl">Vehicle</div><div class="dinfo-val" id="dinfo-vehicle" style="color:var(--g);letter-spacing:.06em">—</div></div></div>
     </div>
-
-    <div class="err hidden" id="login-err"></div>
-    <button class="btn-green" id="clock-in-btn" onclick="clockIn()" disabled>🟢 CLOCK IN</button>
-    <a href="/driver-report" class="report-link" style="margin-top:14px;display:block">📊 Driver Reports →</a>
+    <button class="btn btn-green" id="continue-btn" onclick="goToPin()" disabled>Continue →</button>
   </div>
 </div>
 
-<!-- ══ ACTIVE SESSION SCREEN ══════════════════════════════════════ -->
-<div id="session-screen" class="hidden">
-  <div class="session-header">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start">
-      <div>
-        <h1 id="s-driver-name">Driver Name</h1>
-        <div id="s-vehicle" style="font-size:.9rem;opacity:.8;font-weight:700;margin-top:2px;letter-spacing:.06em">Vehicle</div>
-        <div id="s-branch" style="font-size:.8rem;opacity:.6;margin-top:2px">Branch</div>
-      </div>
-      <div class="badge-on">🟢 ON DUTY</div>
+<!-- ══ STEP 2: PIN ENTRY ════════════════════════════════════════════ -->
+<div class="screen hidden" id="step-pin">
+  <div class="header">
+    <img src="/logo.jpg" alt="Amenfiman"/>
+    <h1>DRIVER LOG</h1>
+  </div>
+  <div class="card">
+    <div class="card-title" id="pin-title">🔐 Enter Your PIN</div>
+    <p style="text-align:center;font-size:.82rem;color:var(--muted);margin-bottom:4px" id="pin-subtitle">Enter your 4-digit personal PIN</p>
+    <div class="pin-dots">
+      <div class="dot" id="d0"></div>
+      <div class="dot" id="d1"></div>
+      <div class="dot" id="d2"></div>
+      <div class="dot" id="d3"></div>
+    </div>
+    <div class="err" id="pin-err"></div>
+    <div class="pin-pad">
+      <div class="pin-key" onclick="pinKey('1')">1</div>
+      <div class="pin-key" onclick="pinKey('2')">2</div>
+      <div class="pin-key" onclick="pinKey('3')">3</div>
+      <div class="pin-key" onclick="pinKey('4')">4</div>
+      <div class="pin-key" onclick="pinKey('5')">5</div>
+      <div class="pin-key" onclick="pinKey('6')">6</div>
+      <div class="pin-key" onclick="pinKey('7')">7</div>
+      <div class="pin-key" onclick="pinKey('8')">8</div>
+      <div class="pin-key" onclick="pinKey('9')">9</div>
+      <div class="pin-key del" onclick="pinDel()">⌫</div>
+      <div class="pin-key zero" onclick="pinKey('0')">0</div>
+    </div>
+    <p style="text-align:center;margin-top:16px;font-size:.78rem;color:var(--muted)">First time? Use default PIN <b>1234</b></p>
+    <button class="btn btn-outline" style="margin-top:12px" onclick="goBack()">← Back</button>
+  </div>
+</div>
+
+<!-- ══ STEP 3: CREATE NEW PIN ═══════════════════════════════════════ -->
+<div class="screen hidden" id="step-create-pin">
+  <div class="header">
+    <img src="/logo.jpg" alt="Amenfiman"/>
+    <h1>DRIVER LOG</h1>
+  </div>
+  <div class="card">
+    <div class="card-title">🔑 Create Your Personal PIN</div>
+    <p style="text-align:center;font-size:.82rem;color:var(--muted);margin-bottom:4px" id="create-pin-subtitle">Choose a new 4-digit PIN you will remember</p>
+    <div class="pin-dots">
+      <div class="dot" id="cd0"></div>
+      <div class="dot" id="cd1"></div>
+      <div class="dot" id="cd2"></div>
+      <div class="dot" id="cd3"></div>
+    </div>
+    <div class="err" id="create-pin-err"></div>
+    <div class="pin-pad">
+      <div class="pin-key" onclick="createPinKey('1')">1</div>
+      <div class="pin-key" onclick="createPinKey('2')">2</div>
+      <div class="pin-key" onclick="createPinKey('3')">3</div>
+      <div class="pin-key" onclick="createPinKey('4')">4</div>
+      <div class="pin-key" onclick="createPinKey('5')">5</div>
+      <div class="pin-key" onclick="createPinKey('6')">6</div>
+      <div class="pin-key" onclick="createPinKey('7')">7</div>
+      <div class="pin-key" onclick="createPinKey('8')">8</div>
+      <div class="pin-key" onclick="createPinKey('9')">9</div>
+      <div class="pin-key del" onclick="createPinDel()">⌫</div>
+      <div class="pin-key zero" onclick="createPinKey('0')">0</div>
     </div>
   </div>
+</div>
 
-  <div class="session-body">
-    <!-- KM Counter -->
+<!-- ══ STEP 4: CLOCK IN ════════════════════════════════════════════ -->
+<div class="screen hidden" id="step-clockin">
+  <div class="header">
+    <img src="/logo.jpg" alt="Amenfiman"/>
+    <h1>DRIVER LOG</h1>
+  </div>
+  <div class="card">
+    <div class="card-title">✅ Verified — Ready to Clock In</div>
+    <div class="dinfo">
+      <div class="dinfo-row"><span class="dinfo-icon">👤</span><div><div class="dinfo-lbl">Driver</div><div class="dinfo-val" id="ci-name">—</div></div></div>
+      <div class="dinfo-row"><span class="dinfo-icon">🚗</span><div><div class="dinfo-lbl">Vehicle</div><div class="dinfo-val" id="ci-vehicle" style="color:var(--g);letter-spacing:.06em">—</div></div></div>
+      <div class="dinfo-row"><span class="dinfo-icon">📍</span><div><div class="dinfo-lbl">Branch</div><div class="dinfo-val" id="ci-branch">—</div></div></div>
+    </div>
+    <div class="err" id="ci-err"></div>
+    <button class="btn btn-green" id="clock-in-btn" onclick="clockIn()">🟢 CLOCK IN</button>
+    <div class="links" style="margin-top:14px">
+      <a href="/driver-mytrips" style="flex:1">📋 My Trips</a>
+      <a onclick="goBack();return false" href="#" style="flex:none;color:var(--muted);border-color:var(--border)">← Back</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ACTIVE SESSION ════════════════════════════════════════════════ -->
+<div id="step-session" class="hidden" style="width:100%;max-width:480px">
+  <div class="sess-header">
+    <div>
+      <h1 id="s-name">Driver</h1>
+      <div id="s-vehicle" style="font-size:.87rem;opacity:.8;font-weight:700;margin-top:2px;letter-spacing:.06em"></div>
+      <div id="s-branch" style="font-size:.78rem;opacity:.6;margin-top:1px"></div>
+    </div>
+    <div class="on-badge">🟢 ON DUTY</div>
+  </div>
+  <div style="padding:16px">
     <div class="km-card">
-      <div class="km-label">Distance Travelled</div>
-      <div class="km-value" id="km-display">0.00</div>
-      <div class="km-unit">kilometres</div>
-      <div class="gps-status" id="gps-status">Acquiring GPS...</div>
+      <div class="lbl">Distance Travelled</div>
+      <div class="val" id="km-val">0.00</div>
+      <div class="unit">kilometres</div>
+      <div class="gps" id="gps-status">Acquiring GPS...</div>
     </div>
-
-    <!-- Stats -->
     <div class="stat-grid">
-      <div class="stat-card blue">
-        <div class="stat-label">Clocked In</div>
-        <div class="stat-value" id="s-clockin-time">—</div>
-      </div>
-      <div class="stat-card purple">
-        <div class="stat-label">Duration</div>
-        <div class="stat-value" id="s-duration">00:00</div>
-      </div>
+      <div class="stat blue"><div class="sl">Clocked In</div><div class="sv" id="s-time">—</div></div>
+      <div class="stat purple"><div class="sl">Duration</div><div class="sv" id="s-dur">00:00</div></div>
     </div>
-
-    <!-- Driver info -->
     <div class="info-box">
-      <div class="info-row"><span class="info-key">Driver</span><span class="info-val" id="s-info-driver">—</span></div>
-      <div class="info-row"><span class="info-key">Vehicle</span><span class="info-val" id="s-info-vehicle" style="color:var(--g)">—</span></div>
-      <div class="info-row"><span class="info-key">Branch</span><span class="info-val" id="s-info-branch">—</span></div>
+      <div class="irow"><span class="ikey">Driver</span><span class="ival" id="s-info-name">—</span></div>
+      <div class="irow"><span class="ikey">Vehicle</span><span class="ival" id="s-info-vehicle" style="color:var(--g)">—</span></div>
+      <div class="irow"><span class="ikey">Branch</span><span class="ival" id="s-info-branch">—</span></div>
     </div>
-
-    <!-- Notes -->
-    <textarea id="notes-area" class="notes-area" rows="2" placeholder="Notes (optional, e.g. carried documents to branch...)"></textarea>
-
-    <button class="btn-red" id="clock-out-btn" onclick="clockOut()">🔴 CLOCK OUT</button>
-    <a href="/driver-report" class="report-link">📊 View Driver Reports →</a>
+    <textarea id="notes" rows="2" placeholder="Notes (optional)..."></textarea>
+    <button class="btn btn-red" onclick="clockOut()">🔴 CLOCK OUT</button>
+    <div class="links">
+      <a href="/driver-mytrips">📋 My Trips</a>
+    </div>
   </div>
 </div>
 
 <script>
-// ── Driver data ───────────────────────────────────────────────────
-const HO = [
-  {v:'GC-5856-20', n:'DOUGLAS QUAINOO'},
-  {v:'GW-9822-23', n:'SIMON ABLORH'},
-  {v:'GW-4586-24', n:'MAXWELL APPIAH'},
-  {v:'GW-9200-22', n:'DIARI MORO'},
-  {v:'GW-2476-17', n:'PRINCE AIDOO'},
-  {v:'GW-4416-21', n:'PATRICK ADARKWAH YIADOM'},
-  {v:'GW-2472-17', n:'JAMES OFORI'},
-  {v:'GW-2876-14', n:'ABRAHAM BIOH'},
-  {v:'GT-6873-15', n:'EUGENE YENDU'},
-  {v:'GN-1554-25', n:'DANIEL FRIMPONG'},
-  {v:'GN-2094-12', n:'YAW ASOMANING'},
-  {v:'GR-9200-17', n:'RANSFORD ANTWI BOASIAKO'},
-  {v:'AS-3318-16', n:'UNKNOWN DRIVER'},
-  {v:'GN-1015-25', n:'UNKNOWN DRIVER'},
+/* ── Driver data ─────────────────────────────────────────── */
+const HO=[
+  {v:'GC-5856-20',n:'DOUGLAS QUAINOO'},{v:'GW-9822-23',n:'SIMON ABLORH'},
+  {v:'GW-4586-24',n:'MAXWELL APPIAH'},{v:'GW-9200-22',n:'DIARI MORO'},
+  {v:'GW-2476-17',n:'PRINCE AIDOO'},{v:'GW-4416-21',n:'PATRICK ADARKWAH YIADOM'},
+  {v:'GW-2472-17',n:'JAMES OFORI'},{v:'GW-2876-14',n:'ABRAHAM BIOH'},
+  {v:'GT-6873-15',n:'EUGENE YENDU'},{v:'GN-1554-25',n:'DANIEL FRIMPONG'},
+  {v:'GN-2094-12',n:'YAW ASOMANING'},{v:'GR-9200-17',n:'RANSFORD ANTWI BOASIAKO'},
+  {v:'AS-3318-16',n:'UNKNOWN DRIVER'},{v:'GN-1015-25',n:'UNKNOWN DRIVER'},
 ];
-const MF = [
-  {v:'GW-2478-17', n:'SOLOMON ABEKAH', sub:'GOASO'},
-  {v:'GW-2474-17', n:'OKINE ABDULLAI', sub:'ELUBO'},
-  {v:'AS-5830-23', n:'UNKNOWN DRIVER', sub:'BEREKUM'},
+const MF=[
+  {v:'GW-2478-17',n:'SOLOMON ABEKAH',sub:'GOASO'},
+  {v:'GW-2474-17',n:'OKINE ABDULLAI',sub:'ELUBO'},
+  {v:'AS-5830-23',n:'UNKNOWN DRIVER',sub:'BEREKUM'},
 ];
-const DUNKWA = [
-  {v:'GW-9753-13', n:'FRANCIS ACHEAMPONG'},
-  {v:'GT-8733-24', n:'FRANCIS ACHEAMPONG'},
-];
-const SINGLE = {
-  'SEFWI BEKWAI':  {v:'GW-9424-25', n:'ALEX TAKYI'},
-  'SEFWIDWENASE':  {v:'GW-9623-25', n:'PATRICK OSEI'},
-  'AKROPONG MAIN': {v:'GW-4903-17', n:'ADABO FRANCIS'},
-  'AKROPONG HIGH': {v:'GW-4905-24', n:'CROSBY LARBI'},
-  'BAWDIE':        {v:'GW-2473-17', n:'MESHACK BOADI'},
-  'TARKWA MAIN':   {v:'GM-1536-16', n:'MAWULI GA'},
-  'TARKWA TAMSO':  {v:'GW-6271-17', n:'RICHARD TAKYI'},
-  'PRESTEA':       {v:'GW-2477-17', n:'EBENEZER DJANGMAH'},
-  'MANSO AMENFI':  {v:'GW-9600-25', n:'NELSON ODURO'},
-  'ASANKO HIGH':   {v:'GT-8794-17', n:'ELVIS BOATENG'},
-  'ASANKO MAIN':   {v:'GT-8431-24', n:'GEORGE MANTEY'},
-  'SAMREBOI':      {v:'GW-4464-24', n:'ROBERT NUM'},
-  'ENCHI':         {v:'GW-7920-16', n:'FRANK OFORI'},
-  'DOMINASE':      {v:'GT-876-16',  n:'ISAAC BOAFO'},
+const DUNKWA=[{v:'GW-9753-13',n:'FRANCIS ACHEAMPONG'},{v:'GT-8733-24',n:'FRANCIS ACHEAMPONG'}];
+const SINGLE={
+  'SEFWI BEKWAI':{v:'GW-9424-25',n:'ALEX TAKYI'},'SEFWIDWENASE':{v:'GW-9623-25',n:'PATRICK OSEI'},
+  'AKROPONG MAIN':{v:'GW-4903-17',n:'ADABO FRANCIS'},'AKROPONG HIGH':{v:'GW-4905-24',n:'CROSBY LARBI'},
+  'BAWDIE':{v:'GW-2473-17',n:'MESHACK BOADI'},'TARKWA MAIN':{v:'GM-1536-16',n:'MAWULI GA'},
+  'TARKWA TAMSO':{v:'GW-6271-17',n:'RICHARD TAKYI'},'PRESTEA':{v:'GW-2477-17',n:'EBENEZER DJANGMAH'},
+  'MANSO AMENFI':{v:'GW-9600-25',n:'NELSON ODURO'},'ASANKO HIGH':{v:'GT-8794-17',n:'ELVIS BOATENG'},
+  'ASANKO MAIN':{v:'GT-8431-24',n:'GEORGE MANTEY'},'SAMREBOI':{v:'GW-4464-24',n:'ROBERT NUM'},
+  'ENCHI':{v:'GW-7920-16',n:'FRANK OFORI'},'DOMINASE':{v:'GT-876-16',n:'ISAAC BOAFO'},
 };
 
-// ── State ─────────────────────────────────────────────────────────
-let selectedDriver = null;  // {n, v}
-let selectedBranch = '';
-let watchId = null;
-let lastLat = null, lastLng = null;
-let totalKm = 0;
-let startTime = null;
-let durationTimer = null;
-let sessionId = null;
-let currentLat = null, currentLng = null;
+/* ── State ───────────────────────────────────────────────── */
+let driver=null, branch='', pin='', createPin='', createStep=0;
+let watchId=null, lastLat=null, lastLng=null, currentLat=null, currentLng=null;
+let totalKm=0, startTime=null, durTimer=null;
 
-// ── Haversine ─────────────────────────────────────────────────────
-function haversine(la1,lo1,la2,lo2){
-  const R=6371, d2r=Math.PI/180;
-  const dLat=(la2-la1)*d2r, dLon=(lo2-lo1)*d2r;
-  const a=Math.sin(dLat/2)**2+Math.cos(la1*d2r)*Math.cos(la2*d2r)*Math.sin(dLon/2)**2;
+/* ── Haversine ───────────────────────────────────────────── */
+function hav(la1,lo1,la2,lo2){
+  const R=6371,r=Math.PI/180,dLa=(la2-la1)*r,dLo=(lo2-lo1)*r;
+  const a=Math.sin(dLa/2)**2+Math.cos(la1*r)*Math.cos(la2*r)*Math.sin(dLo/2)**2;
   return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
 
-// ── Branch selection ──────────────────────────────────────────────
+/* ── Screen helpers ──────────────────────────────────────── */
+function show(id){['step-select','step-pin','step-create-pin','step-clockin','step-session'].forEach(s=>document.getElementById(s).classList.add('hidden'));document.getElementById(id).classList.remove('hidden');if(id==='step-session')document.body.classList.add('session-mode');else document.body.classList.remove('session-mode');}
+
+/* ── Branch / driver selection ───────────────────────────── */
 function onBranchChange(){
-  const b = document.getElementById('branch-sel').value;
-  selectedBranch = b;
-  selectedDriver = null;
-  document.getElementById('driver-info').classList.add('hidden');
-  document.getElementById('driver-select-wrap').classList.add('hidden');
-  document.getElementById('clock-in-btn').disabled = true;
-
-  const sel = document.getElementById('driver-sel');
-  sel.innerHTML = '<option value="">— Choose Driver —</option>';
-
-  let list = null;
-  if (b === 'HEAD OFFICE') list = HO;
-  else if (b === 'MICROFINANCE') list = MF;
-  else if (b === 'DUNKWA') list = DUNKWA;
-
-  if (list) {
-    list.forEach((d,i) => {
-      const label = d.sub ? `${d.n} (${d.sub}) — ${d.v}` : `${d.n} — ${d.v}`;
-      sel.insertAdjacentHTML('beforeend', `<option value="${i}">${label}</option>`);
-    });
-    document.getElementById('driver-select-wrap').classList.remove('hidden');
-  } else if (SINGLE[b]) {
-    selectedDriver = SINGLE[b];
-    showDriverInfo(selectedDriver);
-    document.getElementById('clock-in-btn').disabled = false;
+  branch=document.getElementById('branch-sel').value;
+  driver=null;
+  document.getElementById('dinfo').classList.add('hidden');
+  document.getElementById('driver-sel-wrap').classList.add('hidden');
+  document.getElementById('continue-btn').disabled=true;
+  const sel=document.getElementById('driver-sel');
+  sel.innerHTML='<option value="">— Choose Driver —</option>';
+  let list=null;
+  if(branch==='HEAD OFFICE')list=HO;
+  else if(branch==='MICROFINANCE')list=MF;
+  else if(branch==='DUNKWA')list=DUNKWA;
+  if(list){
+    list.forEach((d,i)=>sel.insertAdjacentHTML('beforeend',`<option value="${i}">${d.n}${d.sub?' ('+d.sub+')':''} — ${d.v}</option>`));
+    document.getElementById('driver-sel-wrap').classList.remove('hidden');
+  } else if(SINGLE[branch]){
+    driver=SINGLE[branch];
+    showDinfo();
+    document.getElementById('continue-btn').disabled=false;
   }
 }
-
 function onDriverSelect(){
-  const val = document.getElementById('driver-sel').value;
-  if (val === '') { selectedDriver = null; document.getElementById('driver-info').classList.add('hidden'); document.getElementById('clock-in-btn').disabled = true; return; }
-  const b = document.getElementById('branch-sel').value;
-  const list = b === 'HEAD OFFICE' ? HO : b === 'MICROFINANCE' ? MF : DUNKWA;
-  selectedDriver = list[parseInt(val)];
-  showDriverInfo(selectedDriver);
-  document.getElementById('clock-in-btn').disabled = false;
+  const v=document.getElementById('driver-sel').value;
+  if(!v){driver=null;document.getElementById('dinfo').classList.add('hidden');document.getElementById('continue-btn').disabled=true;return;}
+  const list=branch==='HEAD OFFICE'?HO:branch==='MICROFINANCE'?MF:DUNKWA;
+  driver=list[parseInt(v)];
+  showDinfo();
+  document.getElementById('continue-btn').disabled=false;
+}
+function showDinfo(){
+  document.getElementById('dinfo-name').textContent=driver.n;
+  document.getElementById('dinfo-vehicle').textContent=driver.v;
+  document.getElementById('dinfo').classList.remove('hidden');
+}
+function goBack(){pin='';updateDots();show('step-select');}
+
+/* ── Go to PIN step ──────────────────────────────────────── */
+function goToPin(){
+  if(!driver)return;
+  pin='';
+  updateDots();
+  document.getElementById('pin-err').classList.remove('show');
+  show('step-pin');
 }
 
-function showDriverInfo(d){
-  document.getElementById('di-name').textContent = d.n;
-  document.getElementById('di-vehicle').textContent = d.v;
-  document.getElementById('driver-info').classList.remove('hidden');
+/* ── PIN keypad ──────────────────────────────────────────── */
+function pinKey(k){if(pin.length>=4)return;pin+=k;updateDots();if(pin.length===4)verifyPin();}
+function pinDel(){pin=pin.slice(0,-1);updateDots();}
+function updateDots(){
+  for(let i=0;i<4;i++) document.getElementById('d'+i).classList.toggle('filled',i<pin.length);
 }
 
-// ── Clock In ──────────────────────────────────────────────────────
-async function clockIn(){
-  if (!selectedDriver) return;
-  const btn = document.getElementById('clock-in-btn');
-  btn.disabled = true;
-  btn.textContent = '⏳ Clocking in...';
-  document.getElementById('login-err').classList.add('hidden');
-
-  // Get GPS in background — don't block the request
-  let lat=null, lng=null, acc=null;
-  if (navigator.geolocation) {
-    try {
-      const pos = await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:5000,enableHighAccuracy:true}));
-      lat=pos.coords.latitude; lng=pos.coords.longitude; acc=pos.coords.accuracy;
-      currentLat=lat; currentLng=lng; lastLat=lat; lastLng=lng;
-    } catch(e){ console.warn('GPS skipped:', e.message); }
-  }
-
-  try {
-    const res = await fetch('/api/driver/clock',{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({driver_name:selectedDriver.n, vehicle_number:selectedDriver.v, event_type:'clock_in', branch:selectedBranch, latitude:lat, longitude:lng, accuracy:acc, km_consumed:0})
-    });
-    const data = await res.json();
-    if (!res.ok){ showErr(data.error||'Server error. Please try again.'); btn.disabled=false; btn.textContent='🟢 CLOCK IN'; return; }
-
-    sessionId = data.id;
-    startTime = new Date();
-    totalKm = 0;
-  } catch(e) {
-    showErr('Network error. Check your internet connection.');
-    btn.disabled=false; btn.textContent='🟢 CLOCK IN'; return;
-  }
-
-  // Save session
-  localStorage.setItem('ds', JSON.stringify({id:sessionId, driver:selectedDriver, branch:selectedBranch, startTime:startTime.toISOString(), km:0}));
-
-  startSession();
-}
-
-function startSession(){
-  document.getElementById('login-screen').classList.add('hidden');
-  document.getElementById('session-screen').classList.remove('hidden');
-  document.getElementById('s-driver-name').textContent = selectedDriver.n;
-  document.getElementById('s-vehicle').textContent = selectedDriver.v;
-  document.getElementById('s-branch').textContent = selectedBranch;
-  document.getElementById('s-info-driver').textContent = selectedDriver.n;
-  document.getElementById('s-info-vehicle').textContent = selectedDriver.v;
-  document.getElementById('s-info-branch').textContent = selectedBranch;
-  document.getElementById('s-clockin-time').textContent = startTime.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-
-  startGPS();
-  durationTimer = setInterval(updateDuration, 1000);
-}
-
-// ── GPS tracking ──────────────────────────────────────────────────
-function startGPS(){
-  if (!navigator.geolocation){ document.getElementById('gps-status').textContent='GPS not available'; return; }
-  watchId = navigator.geolocation.watchPosition(pos=>{
-    const {latitude:la, longitude:lo, accuracy:ac} = pos.coords;
-    document.getElementById('gps-status').textContent = `GPS: ±${Math.round(ac)}m`;
-    currentLat=la; currentLng=lo;
-    if (lastLat!==null){
-      const d = haversine(lastLat,lastLng,la,lo);
-      if (d>0.01){ totalKm=parseFloat((totalKm+d).toFixed(3)); document.getElementById('km-display').textContent=totalKm.toFixed(2); }
+async function verifyPin(){
+  document.getElementById('pin-err').classList.remove('show');
+  try{
+    const res=await fetch('/api/driver/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({driver_name:driver.n,pin})});
+    const data=await res.json();
+    if(!res.ok){
+      document.getElementById('pin-err').textContent=data.error||'Incorrect PIN';
+      document.getElementById('pin-err').classList.add('show');
+      pin='';updateDots();return;
     }
-    lastLat=la; lastLng=lo;
-    const s = JSON.parse(localStorage.getItem('ds')||'{}');
-    if (s.id) localStorage.setItem('ds', JSON.stringify({...s,km:totalKm}));
-  }, e=>{ document.getElementById('gps-status').textContent='GPS: '+e.message; }, {enableHighAccuracy:true,maximumAge:5000,timeout:10000});
+    if(data.mustChangePin){
+      // First time — prompt to create new PIN
+      createPin='';createStep=0;updateCreateDots();
+      document.getElementById('create-pin-err').classList.remove('show');
+      show('step-create-pin');
+    } else {
+      goToClockIn();
+    }
+  }catch(e){
+    document.getElementById('pin-err').textContent='Network error. Try again.';
+    document.getElementById('pin-err').classList.add('show');
+    pin='';updateDots();
+  }
 }
 
-function updateDuration(){
-  if (!startTime) return;
-  const diff = Math.floor((Date.now()-startTime.getTime())/1000);
-  const h=String(Math.floor(diff/3600)).padStart(2,'0'), m=String(Math.floor(diff%3600/60)).padStart(2,'0');
-  document.getElementById('s-duration').textContent=`${h}:${m}`;
+/* ── Create PIN (2-step: enter twice) ───────────────────── */
+function createPinKey(k){
+  if(createPin.length>=4)return;
+  createPin+=k;updateCreateDots();
+  if(createPin.length===4){
+    if(createStep===0){
+      createStep=1;
+      document.getElementById('create-pin-subtitle').textContent='Re-enter your new PIN to confirm';
+      const first=createPin;createPin='';updateCreateDots();
+      window._firstPin=first;
+    } else {
+      if(createPin!==window._firstPin){
+        document.getElementById('create-pin-err').textContent='PINs do not match. Try again.';
+        document.getElementById('create-pin-err').classList.add('show');
+        createPin='';createStep=0;updateCreateDots();
+        document.getElementById('create-pin-subtitle').textContent='Choose a new 4-digit PIN you will remember';
+      } else {
+        saveNewPin(createPin);
+      }
+    }
+  }
+}
+function createPinDel(){createPin=createPin.slice(0,-1);updateCreateDots();}
+function updateCreateDots(){for(let i=0;i<4;i++)document.getElementById('cd'+i).classList.toggle('filled',i<createPin.length);}
+
+async function saveNewPin(newPin){
+  try{
+    await fetch('/api/driver/set-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({driver_name:driver.n,new_pin:newPin})});
+  }catch(e){}
+  goToClockIn();
 }
 
-// ── Clock Out ─────────────────────────────────────────────────────
+/* ── Clock-in screen ─────────────────────────────────────── */
+function goToClockIn(){
+  document.getElementById('ci-name').textContent=driver.n;
+  document.getElementById('ci-vehicle').textContent=driver.v;
+  document.getElementById('ci-branch').textContent=branch;
+  document.getElementById('ci-err').classList.remove('show');
+  document.getElementById('clock-in-btn').disabled=false;
+  document.getElementById('clock-in-btn').textContent='🟢 CLOCK IN';
+  show('step-clockin');
+}
+
+/* ── Clock In ────────────────────────────────────────────── */
+async function clockIn(){
+  const btn=document.getElementById('clock-in-btn');
+  btn.disabled=true;btn.textContent='⏳ Clocking in...';
+  let lat=null,lng=null,acc=null;
+  if(navigator.geolocation){
+    try{const p=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:5000,enableHighAccuracy:true}));lat=p.coords.latitude;lng=p.coords.longitude;acc=p.coords.accuracy;currentLat=lat;currentLng=lng;lastLat=lat;lastLng=lng;}catch(e){}
+  }
+  try{
+    const res=await fetch('/api/driver/clock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({driver_name:driver.n,vehicle_number:driver.v,event_type:'clock_in',branch,latitude:lat,longitude:lng,accuracy:acc,km_consumed:0})});
+    const data=await res.json();
+    if(!res.ok){document.getElementById('ci-err').textContent=data.error||'Clock-in failed';document.getElementById('ci-err').classList.add('show');btn.disabled=false;btn.textContent='🟢 CLOCK IN';return;}
+    startTime=new Date();totalKm=0;
+    localStorage.setItem('ds',JSON.stringify({driver,branch,startTime:startTime.toISOString(),km:0}));
+    startActiveSession();
+  }catch(e){
+    document.getElementById('ci-err').textContent='Network error. Please try again.';
+    document.getElementById('ci-err').classList.add('show');btn.disabled=false;btn.textContent='🟢 CLOCK IN';
+  }
+}
+
+/* ── Active session ──────────────────────────────────────── */
+function startActiveSession(){
+  document.getElementById('s-name').textContent=driver.n;
+  document.getElementById('s-vehicle').textContent=driver.v;
+  document.getElementById('s-branch').textContent=branch;
+  document.getElementById('s-info-name').textContent=driver.n;
+  document.getElementById('s-info-vehicle').textContent=driver.v;
+  document.getElementById('s-info-branch').textContent=branch;
+  document.getElementById('s-time').textContent=startTime.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('km-val').textContent=totalKm.toFixed(2);
+  show('step-session');
+  startGPS();
+  durTimer=setInterval(()=>{
+    if(!startTime)return;
+    const d=Math.floor((Date.now()-startTime.getTime())/1000);
+    document.getElementById('s-dur').textContent=`${String(Math.floor(d/3600)).padStart(2,'0')}:${String(Math.floor(d%3600/60)).padStart(2,'0')}`;
+  },1000);
+}
+
+function startGPS(){
+  if(!navigator.geolocation){document.getElementById('gps-status').textContent='GPS not available';return;}
+  watchId=navigator.geolocation.watchPosition(pos=>{
+    const{latitude:la,longitude:lo,accuracy:ac}=pos.coords;
+    document.getElementById('gps-status').textContent=`GPS ±${Math.round(ac)}m`;
+    currentLat=la;currentLng=lo;
+    if(lastLat!==null){const d=hav(lastLat,lastLng,la,lo);if(d>0.01){totalKm=parseFloat((totalKm+d).toFixed(3));document.getElementById('km-val').textContent=totalKm.toFixed(2);}}
+    lastLat=la;lastLng=lo;
+    const s=JSON.parse(localStorage.getItem('ds')||'{}');if(s.driver)localStorage.setItem('ds',JSON.stringify({...s,km:totalKm}));
+  },e=>{document.getElementById('gps-status').textContent='GPS: '+e.message;},{enableHighAccuracy:true,maximumAge:5000,timeout:10000});
+}
+
+/* ── Clock Out ───────────────────────────────────────────── */
 async function clockOut(){
-  document.getElementById('clock-out-btn').disabled = true;
-  const notes = document.getElementById('notes-area').value.trim();
-
-  await fetch('/api/driver/clock',{
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({driver_name:selectedDriver.n, vehicle_number:selectedDriver.v, event_type:'clock_out', branch:selectedBranch, latitude:currentLat, longitude:currentLng, km_consumed:totalKm, destination:notes})
-  });
-
-  if (watchId!==null) navigator.geolocation.clearWatch(watchId);
-  clearInterval(durationTimer);
+  const notes=document.getElementById('notes').value.trim();
+  await fetch('/api/driver/clock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({driver_name:driver.n,vehicle_number:driver.v,event_type:'clock_out',branch,latitude:currentLat,longitude:currentLng,km_consumed:totalKm,destination:notes})});
+  if(watchId!==null)navigator.geolocation.clearWatch(watchId);
+  clearInterval(durTimer);
   localStorage.removeItem('ds');
-
-  alert(`✅ Clocked out.\nKM Consumed: ${totalKm.toFixed(2)} km\nDriver: ${selectedDriver.n}`);
+  alert(`✅ Clocked out successfully!\nKM Consumed: ${totalKm.toFixed(2)} km`);
   location.reload();
 }
 
-// ── Restore session on load ───────────────────────────────────────
+/* ── Restore session on load ─────────────────────────────── */
 window.addEventListener('load',()=>{
-  const s = JSON.parse(localStorage.getItem('ds')||'null');
-  if (s && s.id){
-    sessionId = s.id;
-    selectedDriver = s.driver;
-    selectedBranch = s.branch;
-    startTime = new Date(s.startTime);
-    totalKm = s.km || 0;
-    document.getElementById('km-display').textContent = totalKm.toFixed(2);
-    startSession();
-  }
+  const s=JSON.parse(localStorage.getItem('ds')||'null');
+  if(s&&s.driver){driver=s.driver;branch=s.branch;startTime=new Date(s.startTime);totalKm=s.km||0;document.getElementById('km-val').textContent=totalKm.toFixed(2);startActiveSession();}
 });
-
-function showErr(msg){ const e=document.getElementById('login-err'); e.textContent=msg; e.classList.remove('hidden'); }
 </script>
 </body>
 </html>

@@ -9,8 +9,10 @@
     { "src": "/attend/(.*)", "dest": "/server.py" },
     { "src": "/driver",         "dest": "/public/driver.html" },
     { "src": "/drivers",        "dest": "/public/driver.html" },
-    { "src": "/driver-report",  "dest": "/public/driver-report.html" },
-    { "src": "/drivers/report", "dest": "/public/driver-report.html" },
+    { "src": "/driver-report",   "dest": "/public/driver-report.html" },
+    { "src": "/drivers/report",  "dest": "/public/driver-report.html" },
+    { "src": "/driver-mytrips",  "dest": "/public/driver-mytrips.html" },
+    { "src": "/drivers/mytrips", "dest": "/public/driver-mytrips.html" },
     { "src": "/",               "dest": "/public/index.html" },
     { "src": "/(.*)",        "dest": "/public/$1" }
   ]
