@@ -1,1047 +1,403 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#1e40af" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Driver Clock-In" />
-  <link rel="manifest" href="/manifest.json" />
-  <title>Driver Clock-In</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"/>
+  <meta name="theme-color" content="#15803d"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-title" content="Driver Log"/>
+  <link rel="manifest" href="/manifest.json"/>
+  <title>Driver Log — Amenfiman Community Bank</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--g:#15803d;--gd:#14532d;--gl:#dcfce7;--red:#dc2626;--blue:#1d4ed8;--purple:#7c3aed;--bg:#f0fdf4;--surface:#fff;--text:#0f172a;--muted:#64748b;--border:#e2e8f0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:480px;margin:0 auto}
+    .hidden{display:none!important}
+    select,input,textarea{width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:14px;font-size:1rem;color:var(--text);font-weight:600;background:#fff;outline:none;transition:border-color .2s}
+    select:focus,input:focus{border-color:var(--g)}
+    button{cursor:pointer;border:none;border-radius:14px;font-weight:800;font-size:1rem;transition:opacity .2s}
+    button:disabled{opacity:.45;cursor:not-allowed}
 
-    :root {
-      --brand: #1e40af;
-      --brand-dark: #1e3a8a;
-      --success: #16a34a;
-      --danger: #dc2626;
-      --purple: #7c3aed;
-      --amber: #d97706;
-      --bg: #f1f5f9;
-      --surface: #ffffff;
-      --text: #0f172a;
-      --muted: #64748b;
-      --border: #e2e8f0;
-    }
+    /* ── LOGIN SCREEN ─────────────────────────────────────── */
+    #login-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;background:linear-gradient(160deg,var(--gd),var(--g));color:#fff}
+    .logo-wrap{text-align:center;margin-bottom:28px}
+    .logo-wrap img{width:90px;height:90px;object-fit:contain;border-radius:18px;background:#fff;padding:6px;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+    .app-title{font-size:1.7rem;font-weight:900;letter-spacing:.04em;margin-top:12px}
+    .app-sub{font-size:.85rem;opacity:.7;margin-top:4px}
+    .card{background:#fff;border-radius:20px;padding:24px;width:100%;max-width:400px;box-shadow:0 8px 32px rgba(0,0,0,.15)}
+    .card h2{font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:20px;text-align:center}
+    .field{margin-bottom:16px}
+    .field label{display:block;font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+    .driver-info{background:var(--gl);border:2px solid var(--g);border-radius:14px;padding:16px;margin-bottom:16px}
+    .driver-info .di-row{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+    .driver-info .di-row:last-child{margin-bottom:0}
+    .di-icon{font-size:1.5rem}
+    .di-label{font-size:.68rem;font-weight:700;color:var(--g);text-transform:uppercase;letter-spacing:.07em}
+    .di-value{font-size:1rem;font-weight:900;color:var(--text)}
+    .btn-green{background:var(--g);color:#fff;width:100%;padding:16px;font-size:1.05rem;margin-top:4px}
+    .btn-green:hover:not(:disabled){background:var(--gd)}
+    .err{color:var(--red);font-size:.85rem;text-align:center;margin-top:8px;font-weight:600}
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      max-width: 480px;
-      margin: 0 auto;
-    }
-
-    .hidden { display: none !important; }
-
-    /* ── Setup screen ─────────────────────────────────── */
-    #setup-screen {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 24px;
-      background: linear-gradient(160deg, var(--brand-dark) 0%, var(--brand) 100%);
-      color: white;
-    }
-
-    .setup-icon { font-size: 4rem; margin-bottom: 20px; }
-    .setup-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 8px; text-align: center; }
-    .setup-sub { font-size: 0.9rem; opacity: 0.7; margin-bottom: 36px; text-align: center; }
-
-    .setup-input {
-      width: 100%;
-      padding: 16px;
-      border-radius: 14px;
-      border: 2px solid rgba(255,255,255,0.25);
-      background: rgba(255,255,255,0.15);
-      color: white;
-      font-size: 1.05rem;
-      outline: none;
-      margin-bottom: 14px;
-      -webkit-appearance: none;
-    }
-    .setup-input::placeholder { color: rgba(255,255,255,0.45); }
-    .setup-input:focus { border-color: rgba(255,255,255,0.65); background: rgba(255,255,255,0.2); }
-
-    .setup-btn {
-      width: 100%;
-      padding: 16px;
-      border-radius: 14px;
-      border: none;
-      background: white;
-      color: var(--brand);
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: opacity 0.15s;
-    }
-    .setup-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .setup-btn:active:not(:disabled) { opacity: 0.85; }
-
-    .pin-label {
-      font-size: 0.8rem; font-weight: 600; opacity: 0.7;
-      margin-bottom: 10px; text-align: left; width: 100%;
-    }
-    .pin-boxes {
-      display: flex; gap: 12px; justify-content: center;
-      margin-bottom: 20px; width: 100%;
-    }
-    .pin-box {
-      width: 60px; height: 68px; border-radius: 14px;
-      border: 2px solid rgba(255,255,255,0.25);
-      background: rgba(255,255,255,0.15);
-      color: white; font-size: 1.8rem; font-weight: 800;
-      text-align: center; outline: none; caret-color: transparent;
-      -webkit-appearance: none; transition: border-color 0.15s;
-    }
-    .pin-box:focus { border-color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.22); }
-    .pin-box.filled { border-color: rgba(255,255,255,0.55); }
-    .setup-error {
-      color: #fca5a5; font-size: 0.82rem; min-height: 18px;
-      margin-bottom: 12px; text-align: center; width: 100%;
-    }
-    .setup-select {
-      width: 100%; padding: 16px; border-radius: 14px;
-      border: 2px solid rgba(255,255,255,0.25);
-      background: rgba(255,255,255,0.15);
-      color: white; font-size: 1rem; outline: none;
-      margin-bottom: 14px; -webkit-appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 16px center;
-      cursor: pointer;
-    }
-    .setup-select option { background: #1e3a8a; color: white; }
-    .setup-select:focus { border-color: rgba(255,255,255,0.65); }
-
-    /* ── App header ───────────────────────────────────── */
-    .header {
-      background: linear-gradient(160deg, var(--brand-dark) 0%, var(--brand) 100%);
-      color: white;
-      padding: 20px 20px 28px;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-
-    .header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-
-    .app-label {
-      font-size: 0.7rem;
-      font-weight: 600;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      opacity: 0.65;
-      margin-bottom: 3px;
-    }
-
-    .driver-name-display {
-      font-size: 1.4rem;
-      font-weight: 800;
-      letter-spacing: -0.01em;
-    }
-
-    .change-btn {
-      background: rgba(255,255,255,0.18);
-      border: none;
-      color: white;
-      padding: 6px 14px;
-      border-radius: 100px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 6px;
-      white-space: nowrap;
-    }
-    .change-btn:active { background: rgba(255,255,255,0.28); }
-
-    .date-line {
-      margin-top: 10px;
-      font-size: 0.82rem;
-      opacity: 0.65;
-    }
-
-    /* ── Content ──────────────────────────────────────── */
-    .content { padding: 20px 16px 40px; }
-
-    /* ── Status card ──────────────────────────────────── */
-    .card {
-      background: var(--surface);
-      border-radius: 16px;
-      padding: 16px 18px;
-      margin-bottom: 20px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-    }
-
-    .card-label {
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--muted);
-      margin-bottom: 12px;
-    }
-
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 5px 13px;
-      border-radius: 100px;
-      font-size: 0.78rem;
-      font-weight: 600;
-    }
-    .chip-done { background: #dcfce7; color: #15803d; }
-    .chip-pending { background: #f1f5f9; color: #94a3b8; }
-
-    /* ── Action buttons ───────────────────────────────── */
-    .section-label {
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--muted);
-      margin-bottom: 12px;
-    }
-
-    .btn-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    .action-btn {
-      border: none;
-      border-radius: 18px;
-      padding: 22px 12px;
-      cursor: pointer;
-      font-weight: 800;
-      font-size: 0.88rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 9px;
-      transition: transform 0.1s, opacity 0.1s;
-      min-height: 100px;
-      color: white;
-      letter-spacing: 0.01em;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .action-btn .btn-icon { font-size: 2rem; line-height: 1; }
-    .action-btn:active:not(:disabled) { transform: scale(0.94); opacity: 0.88; }
-    .action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-
-    .btn-lodge-out  { background: linear-gradient(145deg,#5b21b6,#a78bfa); box-shadow: 0 5px 18px rgba(91,33,182,0.35); }
-    .btn-lodge-in   { background: linear-gradient(145deg,#b45309,#fbbf24); box-shadow: 0 5px 18px rgba(180,83,9,0.35); }
-
-    /* ── Create PIN / Forgot PIN screens ─────────────── */
-    #create-pin-screen, #forgot-pin-modal {
-      position: fixed; inset: 0; z-index: 500;
-      background: linear-gradient(160deg, #1e3a8a 0%, #1e40af 100%);
-      display: flex; align-items: center; justify-content: center;
-      padding: 28px 24px;
-      color: white;
-    }
-    #create-pin-screen.hidden, #forgot-pin-modal.hidden { display: none !important; }
-
-    .flow-box {
-      width: 100%; max-width: 360px;
-      display: flex; flex-direction: column; align-items: center;
-    }
-    .flow-icon  { font-size: 2.8rem; margin-bottom: 14px; }
-    .flow-title { font-size: 1.35rem; font-weight: 800; margin-bottom: 6px; text-align: center; }
-    .flow-sub   { font-size: 0.82rem; opacity: 0.72; margin-bottom: 28px; text-align: center; }
-    .flow-label { font-size: 0.78rem; font-weight: 600; opacity: 0.75; margin-bottom: 10px; align-self: flex-start; }
-    .flow-error { color: #fca5a5; font-size: 0.82rem; min-height: 18px; margin-bottom: 10px; text-align: center; width: 100%; }
-
-    .flow-input {
-      width: 100%; padding: 13px 16px; border-radius: 13px;
-      border: 2px solid rgba(255,255,255,0.25);
-      background: rgba(255,255,255,0.15); color: white;
-      font-size: 1rem; outline: none; margin-bottom: 14px;
-      -webkit-appearance: none;
-    }
-    .flow-input::placeholder { color: rgba(255,255,255,0.45); }
-    .flow-input:focus { border-color: rgba(255,255,255,0.65); }
-
-    .flow-btn {
-      width: 100%; padding: 15px; border-radius: 14px; border: none;
-      background: white; color: var(--brand); font-size: 1rem;
-      font-weight: 700; cursor: pointer; margin-top: 4px;
-      transition: opacity 0.15s;
-    }
-    .flow-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .flow-btn:active:not(:disabled) { opacity: 0.82; }
-    .flow-back {
-      background: none; border: none; color: rgba(255,255,255,0.65);
-      font-size: 0.82rem; cursor: pointer; margin-top: 18px;
-      text-decoration: underline;
-    }
-
-    /* ── Clock-out review sheet ──────────────────────── */
-    .clockout-list {
-      width: 100%; margin-bottom: 16px;
-      display: flex; flex-direction: column; gap: 8px;
-      max-height: 240px; overflow-y: auto;
-    }
-    .clockout-item {
-      display: flex; align-items: flex-start; gap: 10px;
-      background: #f8fafc; border-radius: 12px;
-      padding: 11px 14px; border: 1.5px solid #e2e8f0;
-    }
-    .clockout-item-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      background: var(--purple); flex-shrink: 0; margin-top: 4px;
-    }
-    .clockout-item-body { flex: 1; min-width: 0; }
-    .clockout-item-time { font-size: 0.75rem; color: var(--muted); margin-bottom: 2px; }
-    .clockout-item-dest { font-size: 0.88rem; font-weight: 700; color: var(--text);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .clockout-empty {
-      text-align: center; color: var(--muted); font-size: 0.83rem;
-      padding: 16px 0;
-    }
-
-    /* ── Destination modal ────────────────────────────── */
-    #dest-modal {
-      position: fixed; inset: 0; z-index: 400;
-      background: rgba(15,23,42,0.6);
-      display: flex; align-items: flex-end; justify-content: center;
-    }
-    #dest-modal.hidden { display: none !important; }
-    .dest-sheet {
-      background: var(--surface);
-      border-radius: 24px 24px 0 0;
-      padding: 28px 24px 36px;
-      width: 100%; max-width: 480px;
-      box-shadow: 0 -8px 40px rgba(0,0,0,0.18);
-    }
-    .dest-handle {
-      width: 40px; height: 4px; border-radius: 2px;
-      background: var(--border); margin: 0 auto 20px;
-    }
-    .dest-title { font-size: 1.05rem; font-weight: 800; color: var(--text); margin-bottom: 4px; }
-    .dest-sub { font-size: 0.8rem; color: var(--muted); margin-bottom: 18px; }
-    .dest-input {
-      width: 100%; padding: 14px 16px; border-radius: 14px;
-      border: 2px solid var(--border); font-size: 1rem;
-      outline: none; margin-bottom: 16px; -webkit-appearance: none;
-      transition: border-color 0.15s;
-    }
-    .dest-input:focus { border-color: var(--purple); }
-    .dest-actions { display: flex; gap: 10px; }
-    .dest-cancel {
-      flex: 1; padding: 14px; border-radius: 14px; border: 1px solid var(--border);
-      background: none; color: var(--muted); font-size: 0.9rem; font-weight: 600;
-      cursor: pointer;
-    }
-    .dest-confirm {
-      flex: 2; padding: 14px; border-radius: 14px; border: none;
-      background: linear-gradient(145deg,#5b21b6,#a78bfa);
-      color: white; font-size: 0.9rem; font-weight: 700; cursor: pointer;
-    }
-    .dest-confirm:active { opacity: 0.88; }
-
-    /* ── Timeline ─────────────────────────────────────── */
-    .timeline { display: flex; flex-direction: column; gap: 8px; }
-
-    .tl-item {
-      background: var(--surface);
-      border-radius: 14px;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    }
-
-    .tl-dot {
-      width: 11px; height: 11px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .dot-clock_in          { background: #22c55e; }
-    .dot-clock_out         { background: #f87171; }
-    .dot-lodgment_departure { background: #a78bfa; }
-    .dot-lodgment_return   { background: #fbbf24; }
-
-    .tl-body { flex: 1; min-width: 0; }
-    .tl-event { font-weight: 700; font-size: 0.875rem; }
-    .tl-meta  { font-size: 0.72rem; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .tl-time  { font-size: 0.85rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
-
-    .empty-msg {
-      text-align: center;
-      padding: 28px 16px;
-      color: var(--muted);
-      font-size: 0.875rem;
-    }
-
-    /* ── Loading overlay ──────────────────────────────── */
-    #loading-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(15,23,42,0.65);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 200;
-      gap: 16px;
-      color: white;
-      font-size: 0.95rem;
-      font-weight: 500;
-    }
-
-    .spinner {
-      width: 44px; height: 44px;
-      border: 3px solid rgba(255,255,255,0.25);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.75s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Toast ────────────────────────────────────────── */
-    #toast {
-      position: fixed;
-      bottom: 28px;
-      left: 50%;
-      transform: translateX(-50%) translateY(72px);
-      padding: 12px 22px;
-      border-radius: 100px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      transition: transform 0.25s ease;
-      z-index: 300;
-      white-space: nowrap;
-      max-width: 90vw;
-      pointer-events: none;
-    }
-    #toast.show { transform: translateX(-50%) translateY(0); }
-    #toast.success { background: #15803d; color: white; }
-    #toast.error   { background: #b91c1c; color: white; }
-    #toast.info    { background: #1e293b; color: white; }
+    /* ── ACTIVE SESSION SCREEN ────────────────────────────── */
+    #session-screen{padding:0 0 48px}
+    .session-header{background:linear-gradient(135deg,var(--gd),var(--g));color:#fff;padding:20px 20px 28px;position:relative}
+    .session-header h1{font-size:1.2rem;font-weight:900;letter-spacing:.03em}
+    .badge-on{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;font-size:.72rem;font-weight:800;padding:4px 10px;border-radius:20px;display:inline-block;margin-top:6px}
+    .session-body{padding:16px}
+    .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+    .stat-card{background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:16px;text-align:center}
+    .stat-card.blue{background:#eff6ff;border-color:#bfdbfe}
+    .stat-card.purple{background:#f5f3ff;border-color:#ddd6fe}
+    .stat-label{font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
+    .stat-value{font-size:1.5rem;font-weight:900;color:var(--text)}
+    .km-card{background:linear-gradient(135deg,var(--g),#16a34a);border-radius:20px;padding:24px;text-align:center;color:#fff;margin-bottom:14px;box-shadow:0 4px 20px rgba(21,128,61,.4)}
+    .km-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.7);margin-bottom:8px}
+    .km-value{font-size:3.5rem;font-weight:900;line-height:1;letter-spacing:-.02em}
+    .km-unit{font-size:1rem;font-weight:700;opacity:.8;margin-top:4px}
+    .gps-status{font-size:.72rem;opacity:.65;margin-top:8px}
+    .info-box{background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px}
+    .info-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+    .info-row:last-child{border-bottom:none}
+    .info-key{font-size:.8rem;font-weight:600;color:var(--muted)}
+    .info-val{font-size:.9rem;font-weight:800;color:var(--text)}
+    .btn-red{background:var(--red);color:#fff;width:100%;padding:18px;font-size:1.1rem}
+    .btn-red:hover:not(:disabled){background:#b91c1c}
+    .notes-area{padding:10px 14px;border:2px solid var(--border);border-radius:12px;font-size:.9rem;font-weight:600;color:var(--text);resize:none;width:100%;margin-bottom:14px}
+    .notes-area:focus{border-color:var(--g);outline:none}
+    .report-link{display:block;text-align:center;margin-top:16px;color:var(--g);font-weight:700;font-size:.9rem;text-decoration:none}
+    .report-link:hover{text-decoration:underline}
   </style>
 </head>
 <body>
 
-<!-- ── Setup screen ──────────────────────────────────── -->
-<div id="setup-screen">
-  <div class="setup-icon">🚛</div>
-  <div class="setup-title">Driver App</div>
-  <div class="setup-sub">Enter your name and PIN to continue</div>
-  <input id="name-input" class="setup-input" type="text" placeholder="Your full name"
-         autocomplete="name" autocapitalize="words" />
-  <select id="branch-select" class="setup-select">
-    <option value="" disabled selected>Select your branch</option>
-    <option>WASSA AKROPONG</option>
-    <option>NKOSUOFIE</option>
-    <option>PRESTEA</option>
-    <option>ENCHI</option>
-    <option>DUNKWA</option>
-    <option>SAMREBOI</option>
-    <option>BAWDIE</option>
-    <option>TAMSO</option>
-    <option>AKROPONG HIGH</option>
-    <option>MICROFINANCE</option>
-    <option>ASANKO HIGH</option>
-    <option>SANTASI</option>
-    <option>DWENASE</option>
-    <option>ABREPO</option>
-    <option>SUAME</option>
-    <option>BEKWAI</option>
-    <option>ADUM PZ</option>
-    <option>TARKWA MAIN</option>
-    <option>GYAPA</option>
-    <option>MANSO</option>
-    <option>HEADOFFICE</option>
-    <option>MANAGER</option>
-  </select>
-  <div class="pin-label">4-Digit PIN</div>
-  <div class="pin-boxes">
-    <input class="pin-box" id="pin-0" type="password" inputmode="numeric" maxlength="1" pattern="[0-9]" />
-    <input class="pin-box" id="pin-1" type="password" inputmode="numeric" maxlength="1" pattern="[0-9]" />
-    <input class="pin-box" id="pin-2" type="password" inputmode="numeric" maxlength="1" pattern="[0-9]" />
-    <input class="pin-box" id="pin-3" type="password" inputmode="numeric" maxlength="1" pattern="[0-9]" />
+<!-- ══ LOGIN / BRANCH SELECT SCREEN ══════════════════════════════ -->
+<div id="login-screen">
+  <div class="logo-wrap">
+    <img src="/logo.jpg" alt="Amenfiman"/>
+    <div class="app-title">DRIVER LOG</div>
+    <div class="app-sub">Amenfiman Community Bank</div>
   </div>
-  <div id="setup-error" class="setup-error"></div>
-  <button id="save-name-btn" class="setup-btn" disabled onclick="saveName()">Sign In →</button>
-  <button style="background:none;border:none;color:rgba(255,255,255,0.55);font-size:0.8rem;margin-top:18px;cursor:pointer;text-decoration:underline" onclick="showForgotPin()">Forgot PIN?</button>
-</div>
 
-<!-- ── Create PIN screen ─────────────────────────────── -->
-<div id="create-pin-screen" class="hidden">
-  <div class="flow-box">
-    <div class="flow-icon">🔐</div>
-    <div class="flow-title">Create Your PIN</div>
-    <div class="flow-sub">You logged in with the default PIN.<br>Set a personal 4-digit PIN to secure your account.</div>
+  <div class="card">
+    <h2>🚗 Clock In</h2>
 
-    <div class="flow-label">New PIN</div>
-    <div class="pin-boxes" id="new-pin-boxes">
-      <input class="pin-box" id="npin-0" type="password" inputmode="numeric" maxlength="1" pattern="[0-9]" />
-      <input class="pin-box" id="npin-1" type="password" inputmode="numeric" maxlength="1" pattern="[0-9]" />
-      <input class="pin-box" id="npin-2" type="password" inputmode="numeric" maxlength="1" pattern="[0-9]" />
-      <input class="pin-box" id="npin-3" type="password" inputmode="numeric" maxlength="1" pattern="[0-9]" />
+    <div class="field">
+      <label>Select Branch</label>
+      <select id="branch-sel" onchange="onBranchChange()">
+        <option value="">— Choose Your Branch —</option>
+        <option>HEAD OFFICE</option>
+        <option>MICROFINANCE</option>
+        <option>DUNKWA</option>
+        <option>SEFWI BEKWAI</option>
+        <option>SEFWIDWENASE</option>
+        <option>AKROPONG MAIN</option>
+        <option>AKROPONG HIGH</option>
+        <option>BAWDIE</option>
+        <option>TARKWA MAIN</option>
+        <option>TARKWA TAMSO</option>
+        <option>PRESTEA</option>
+        <option>MANSO AMENFI</option>
+        <option>ASANKO HIGH</option>
+        <option>ASANKO MAIN</option>
+        <option>SAMREBOI</option>
+        <option>ENCHI</option>
+        <option>DOMINASE</option>
+      </select>
     </div>
 
-    <div class="flow-label">Confirm PIN</div>
-    <div class="pin-boxes" id="confirm-pin-boxes">
-      <input class="pin-box" id="cpin-0" type="password" inputmode="numeric" maxlength="1" pattern="[0-9]" />
-      <input class="pin-box" id="cpin-1" type="password" inputmode="numeric" maxlength="1" pattern="[0-9]" />
-      <input class="pin-box" id="cpin-2" type="password" inputmode="numeric" maxlength="1" pattern="[0-9]" />
-      <input class="pin-box" id="cpin-3" type="password" inputmode="numeric" maxlength="1" pattern="[0-9]" />
+    <!-- Driver dropdown (HO / MF / Dunkwa) -->
+    <div class="field hidden" id="driver-select-wrap">
+      <label>Select Driver</label>
+      <select id="driver-sel" onchange="onDriverSelect()">
+        <option value="">— Choose Driver —</option>
+      </select>
     </div>
 
-    <div id="create-pin-error" class="flow-error"></div>
-    <button id="set-pin-btn" class="flow-btn" disabled onclick="submitNewPin()">Set PIN & Continue →</button>
+    <!-- Auto-filled driver info -->
+    <div class="driver-info hidden" id="driver-info">
+      <div class="di-row">
+        <span class="di-icon">👤</span>
+        <div>
+          <div class="di-label">Driver Name</div>
+          <div class="di-value" id="di-name">—</div>
+        </div>
+      </div>
+      <div class="di-row">
+        <span class="di-icon">🚗</span>
+        <div>
+          <div class="di-label">Vehicle Number</div>
+          <div class="di-value" id="di-vehicle" style="color:var(--g);font-size:1.15rem;letter-spacing:.08em">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="err hidden" id="login-err"></div>
+    <button class="btn-green" id="clock-in-btn" onclick="clockIn()" disabled>🟢 CLOCK IN</button>
+    <a href="/driver-report" class="report-link" style="margin-top:14px;display:block">📊 Driver Reports →</a>
   </div>
 </div>
 
-<!-- ── Forgot PIN modal ───────────────────────────────── -->
-<div id="forgot-pin-modal" class="hidden">
-  <div class="flow-box">
-    <div class="flow-icon">🔑</div>
-    <div class="flow-title">Reset PIN</div>
-    <div class="flow-sub">Enter your name and the admin password to reset your PIN back to the default.</div>
-
-    <input id="forgot-name" class="flow-input" type="text" placeholder="Your full name"
-           autocapitalize="words" autocomplete="name" />
-    <input id="forgot-admin-pw" class="flow-input" type="password" placeholder="Admin password" />
-
-    <div id="forgot-error" class="flow-error"></div>
-    <button id="reset-pin-btn" class="flow-btn" onclick="submitResetPin()">Reset PIN</button>
-    <button class="flow-back" onclick="hideForgotPin()">← Back to Login</button>
-  </div>
-</div>
-
-<!-- ── Main app screen ───────────────────────────────── -->
-<div id="main-screen" class="hidden">
-
-  <div class="header">
-    <div class="header-row">
+<!-- ══ ACTIVE SESSION SCREEN ══════════════════════════════════════ -->
+<div id="session-screen" class="hidden">
+  <div class="session-header">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
       <div>
-        <div class="app-label">Driver Clock-In</div>
-        <div class="driver-name-display" id="header-name"></div>
+        <h1 id="s-driver-name">Driver Name</h1>
+        <div id="s-vehicle" style="font-size:.9rem;opacity:.8;font-weight:700;margin-top:2px;letter-spacing:.06em">Vehicle</div>
+        <div id="s-branch" style="font-size:.8rem;opacity:.6;margin-top:2px">Branch</div>
       </div>
-      <button class="change-btn" onclick="doSignOut()">Sign Out</button>
+      <div class="badge-on">🟢 ON DUTY</div>
     </div>
-    <div class="date-line" id="date-line"></div>
   </div>
 
-  <div class="content">
+  <div class="session-body">
+    <!-- KM Counter -->
+    <div class="km-card">
+      <div class="km-label">Distance Travelled</div>
+      <div class="km-value" id="km-display">0.00</div>
+      <div class="km-unit">kilometres</div>
+      <div class="gps-status" id="gps-status">Acquiring GPS...</div>
+    </div>
 
-    <!-- Status -->
-    <div class="card">
-      <div class="card-label">Today's Status</div>
-      <div class="chips" id="status-chips">
-        <span class="chip chip-pending">Loading…</span>
+    <!-- Stats -->
+    <div class="stat-grid">
+      <div class="stat-card blue">
+        <div class="stat-label">Clocked In</div>
+        <div class="stat-value" id="s-clockin-time">—</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-label">Duration</div>
+        <div class="stat-value" id="s-duration">00:00</div>
       </div>
     </div>
 
-    <!-- Actions -->
-    <div class="section-label">Record Action</div>
-    <div class="btn-grid">
-      <button class="action-btn btn-lodge-out" onclick="promptDeparture()">
-        <span class="btn-icon">☀️</span>Clock In
-      </button>
-      <button class="action-btn btn-lodge-in"  onclick="promptClockOut()">
-        <span class="btn-icon">🌙</span>Clock Out
-      </button>
+    <!-- Driver info -->
+    <div class="info-box">
+      <div class="info-row"><span class="info-key">Driver</span><span class="info-val" id="s-info-driver">—</span></div>
+      <div class="info-row"><span class="info-key">Vehicle</span><span class="info-val" id="s-info-vehicle" style="color:var(--g)">—</span></div>
+      <div class="info-row"><span class="info-key">Branch</span><span class="info-val" id="s-info-branch">—</span></div>
     </div>
 
-    <!-- Today's activity -->
-    <div class="section-label">Today's Activity</div>
-    <div class="timeline" id="timeline">
-      <div class="empty-msg">No activity recorded yet today</div>
-    </div>
+    <!-- Notes -->
+    <textarea id="notes-area" class="notes-area" rows="2" placeholder="Notes (optional, e.g. carried documents to branch...)"></textarea>
 
+    <button class="btn-red" id="clock-out-btn" onclick="clockOut()">🔴 CLOCK OUT</button>
+    <a href="/driver-report" class="report-link">📊 View Driver Reports →</a>
   </div>
 </div>
-
-<!-- ── Clock-out review sheet ────────────────────────── -->
-<div id="clockout-modal" class="hidden">
-  <div class="dest-sheet">
-    <div class="dest-handle"></div>
-    <div class="dest-title">Clock Out</div>
-    <div class="dest-sub">Your clock-ins today</div>
-    <div class="clockout-list" id="clockout-list"></div>
-    <div class="dest-actions">
-      <button class="dest-cancel" onclick="cancelClockOut()">Cancel</button>
-      <button class="dest-confirm" style="background:linear-gradient(145deg,#b45309,#fbbf24)" onclick="confirmClockOut()">Confirm Clock Out</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── Destination modal ─────────────────────────────── -->
-<div id="dest-modal" class="hidden">
-  <div class="dest-sheet">
-    <div class="dest-handle"></div>
-    <div class="dest-title">Where are you going?</div>
-    <div class="dest-sub">Enter your destination before clocking in</div>
-    <input id="dest-input" class="dest-input" type="text"
-           placeholder="e.g. Head Office, Kumasi Branch…"
-           autocapitalize="words" autocomplete="off" />
-    <div class="dest-actions">
-      <button class="dest-cancel" onclick="cancelDeparture()">Cancel</button>
-      <button class="dest-confirm" onclick="confirmDeparture()">Confirm Departure</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── Loading overlay ───────────────────────────────── -->
-<div id="loading-overlay" class="hidden">
-  <div class="spinner"></div>
-  <div id="loading-text">Getting GPS location…</div>
-</div>
-
-<!-- ── Toast ─────────────────────────────────────────── -->
-<div id="toast"></div>
 
 <script>
-  const LABELS = {
-    lodgment_departure:  'Clock In',
-    lodgment_return:     'Clock Out',
-  };
+// ── Driver data ───────────────────────────────────────────────────
+const HO = [
+  {v:'GC-5856-20', n:'DOUGLAS QUAINOO'},
+  {v:'GW-9822-23', n:'SIMON ABLORH'},
+  {v:'GW-4586-24', n:'MAXWELL APPIAH'},
+  {v:'GW-9200-22', n:'DIARI MORO'},
+  {v:'GW-2476-17', n:'PRINCE AIDOO'},
+  {v:'GW-4416-21', n:'PATRICK ADARKWAH YIADOM'},
+  {v:'GW-2472-17', n:'JAMES OFORI'},
+  {v:'GW-2876-14', n:'ABRAHAM BIOH'},
+  {v:'GT-6873-15', n:'EUGENE YENDU'},
+  {v:'GN-1554-25', n:'DANIEL FRIMPONG'},
+  {v:'GN-2094-12', n:'YAW ASOMANING'},
+  {v:'GR-9200-17', n:'RANSFORD ANTWI BOASIAKO'},
+  {v:'AS-3318-16', n:'UNKNOWN DRIVER'},
+  {v:'GN-1015-25', n:'UNKNOWN DRIVER'},
+];
+const MF = [
+  {v:'GW-2478-17', n:'SOLOMON ABEKAH', sub:'GOASO'},
+  {v:'GW-2474-17', n:'OKINE ABDULLAI', sub:'ELUBO'},
+  {v:'AS-5830-23', n:'UNKNOWN DRIVER', sub:'BEREKUM'},
+];
+const DUNKWA = [
+  {v:'GW-9753-13', n:'FRANCIS ACHEAMPONG'},
+  {v:'GT-8733-24', n:'FRANCIS ACHEAMPONG'},
+];
+const SINGLE = {
+  'SEFWI BEKWAI':  {v:'GW-9424-25', n:'ALEX TAKYI'},
+  'SEFWIDWENASE':  {v:'GW-9623-25', n:'PATRICK OSEI'},
+  'AKROPONG MAIN': {v:'GW-4903-17', n:'ADABO FRANCIS'},
+  'AKROPONG HIGH': {v:'GW-4905-24', n:'CROSBY LARBI'},
+  'BAWDIE':        {v:'GW-2473-17', n:'MESHACK BOADI'},
+  'TARKWA MAIN':   {v:'GM-1536-16', n:'MAWULI GA'},
+  'TARKWA TAMSO':  {v:'GW-6271-17', n:'RICHARD TAKYI'},
+  'PRESTEA':       {v:'GW-2477-17', n:'EBENEZER DJANGMAH'},
+  'MANSO AMENFI':  {v:'GW-9600-25', n:'NELSON ODURO'},
+  'ASANKO HIGH':   {v:'GT-8794-17', n:'ELVIS BOATENG'},
+  'ASANKO MAIN':   {v:'GT-8431-24', n:'GEORGE MANTEY'},
+  'SAMREBOI':      {v:'GW-4464-24', n:'ROBERT NUM'},
+  'ENCHI':         {v:'GW-7920-16', n:'FRANK OFORI'},
+  'DOMINASE':      {v:'GT-876-16',  n:'ISAAC BOAFO'},
+};
 
-  let driverName   = localStorage.getItem('driverName')   || '';
-  let driverBranch = localStorage.getItem('driverBranch') || '';
-  let todayEvents  = [];
+// ── State ─────────────────────────────────────────────────────────
+let selectedDriver = null;  // {n, v}
+let selectedBranch = '';
+let watchId = null;
+let lastLat = null, lastLng = null;
+let totalKm = 0;
+let startTime = null;
+let durationTimer = null;
+let sessionId = null;
+let currentLat = null, currentLng = null;
 
-  // ── Setup ──────────────────────────────────────────────
+// ── Haversine ─────────────────────────────────────────────────────
+function haversine(la1,lo1,la2,lo2){
+  const R=6371, d2r=Math.PI/180;
+  const dLat=(la2-la1)*d2r, dLon=(lo2-lo1)*d2r;
+  const a=Math.sin(dLat/2)**2+Math.cos(la1*d2r)*Math.cos(la2*d2r)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
 
-  const nameInput = document.getElementById('name-input');
-  const saveBtn   = document.getElementById('save-name-btn');
+// ── Branch selection ──────────────────────────────────────────────
+function onBranchChange(){
+  const b = document.getElementById('branch-sel').value;
+  selectedBranch = b;
+  selectedDriver = null;
+  document.getElementById('driver-info').classList.add('hidden');
+  document.getElementById('driver-select-wrap').classList.add('hidden');
+  document.getElementById('clock-in-btn').disabled = true;
 
-  // ── PIN box helper ──────────────────────────────────────
+  const sel = document.getElementById('driver-sel');
+  sel.innerHTML = '<option value="">— Choose Driver —</option>';
 
-  function wirePinBoxes(prefix, count, onComplete, onChangeCb) {
-    const boxes = Array.from({length: count}, (_, i) => document.getElementById(`${prefix}${i}`));
-    const getVal = () => boxes.map(b => b.value).join('');
-    boxes.forEach((box, i) => {
-      box.addEventListener('input', () => {
-        const v = box.value.replace(/\D/g, '');
-        box.value = v ? v[v.length - 1] : '';
-        box.classList.toggle('filled', !!box.value);
-        if (box.value && i < count - 1) boxes[i + 1].focus();
-        if (onChangeCb) onChangeCb();
-        if (getVal().length === count && onComplete) onComplete();
-      });
-      box.addEventListener('keydown', e => {
-        if (e.key === 'Backspace' && !box.value && i > 0) {
-          boxes[i - 1].value = '';
-          boxes[i - 1].classList.remove('filled');
-          boxes[i - 1].focus();
-          if (onChangeCb) onChangeCb();
-        }
-        if (e.key === 'Enter' && getVal().length === count && onComplete) onComplete();
-      });
+  let list = null;
+  if (b === 'HEAD OFFICE') list = HO;
+  else if (b === 'MICROFINANCE') list = MF;
+  else if (b === 'DUNKWA') list = DUNKWA;
+
+  if (list) {
+    list.forEach((d,i) => {
+      const label = d.sub ? `${d.n} (${d.sub}) — ${d.v}` : `${d.n} — ${d.v}`;
+      sel.insertAdjacentHTML('beforeend', `<option value="${i}">${label}</option>`);
     });
-    return { boxes, getVal, clear: () => { boxes.forEach(b => { b.value = ''; b.classList.remove('filled'); }); } };
+    document.getElementById('driver-select-wrap').classList.remove('hidden');
+  } else if (SINGLE[b]) {
+    selectedDriver = SINGLE[b];
+    showDriverInfo(selectedDriver);
+    document.getElementById('clock-in-btn').disabled = false;
   }
+}
 
-  // ── Login form ──────────────────────────────────────────
+function onDriverSelect(){
+  const val = document.getElementById('driver-sel').value;
+  if (val === '') { selectedDriver = null; document.getElementById('driver-info').classList.add('hidden'); document.getElementById('clock-in-btn').disabled = true; return; }
+  const b = document.getElementById('branch-sel').value;
+  const list = b === 'HEAD OFFICE' ? HO : b === 'MICROFINANCE' ? MF : DUNKWA;
+  selectedDriver = list[parseInt(val)];
+  showDriverInfo(selectedDriver);
+  document.getElementById('clock-in-btn').disabled = false;
+}
 
-  const branchSelect = document.getElementById('branch-select');
-  if (driverBranch) branchSelect.value = driverBranch;
+function showDriverInfo(d){
+  document.getElementById('di-name').textContent = d.n;
+  document.getElementById('di-vehicle').textContent = d.v;
+  document.getElementById('driver-info').classList.remove('hidden');
+}
 
-  const loginPin = wirePinBoxes('pin-', 4, () => saveName(), checkLoginReady);
+// ── Clock In ──────────────────────────────────────────────────────
+async function clockIn(){
+  if (!selectedDriver) return;
+  document.getElementById('clock-in-btn').disabled = true;
+  document.getElementById('login-err').classList.add('hidden');
 
-  function checkLoginReady() {
-    saveBtn.disabled =
-      nameInput.value.trim().length < 2 ||
-      !branchSelect.value ||
-      loginPin.getVal().length < 4;
-  }
+  let lat=null, lng=null, acc=null;
+  try {
+    const pos = await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:8000,enableHighAccuracy:true}));
+    lat=pos.coords.latitude; lng=pos.coords.longitude; acc=pos.coords.accuracy;
+    currentLat=lat; currentLng=lng; lastLat=lat; lastLng=lng;
+  } catch(e){ console.warn('GPS unavailable'); }
 
-  nameInput.addEventListener('input', checkLoginReady);
-  branchSelect.addEventListener('change', checkLoginReady);
-  nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') branchSelect.focus(); });
-  branchSelect.addEventListener('keydown', e => { if (e.key === 'Enter') loginPin.boxes[0].focus(); });
+  const res = await fetch('/api/driver/clock',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({driver_name:selectedDriver.n, vehicle_number:selectedDriver.v, event_type:'clock_in', branch:selectedBranch, latitude:lat, longitude:lng, accuracy:acc, km_consumed:0})
+  });
+  const data = await res.json();
+  if (!res.ok){ showErr(data.error||'Clock-in failed'); document.getElementById('clock-in-btn').disabled=false; return; }
 
-  async function saveName() {
-    const val = nameInput.value.trim();
-    if (val.length < 2 || loginPin.getVal().length < 4) return;
-    saveBtn.disabled = true;
-    document.getElementById('setup-error').textContent = '';
-    try {
-      const res = await fetch('/api/driver/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ driver_name: val, pin: loginPin.getVal() }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        document.getElementById('setup-error').textContent = 'Incorrect PIN. Please try again.';
-        loginPin.clear(); loginPin.boxes[0].focus();
-        saveBtn.disabled = false;
-        return;
-      }
-      driverName   = val;
-      driverBranch = branchSelect.value;
-      if (json.mustChangePin) {
-        document.getElementById('setup-screen').classList.add('hidden');
-        document.getElementById('create-pin-screen').classList.remove('hidden');
-        newPin.clear(); confirmPin.clear();
-        newPin.boxes[0].focus();
-      } else {
-        localStorage.setItem('driverName',   val);
-        localStorage.setItem('driverBranch', driverBranch);
-        showMain();
-      }
-    } catch {
-      document.getElementById('setup-error').textContent = 'Connection error. Please try again.';
-      saveBtn.disabled = false;
+  sessionId = data.id;
+  startTime = new Date();
+  totalKm = 0;
+
+  // Save session
+  localStorage.setItem('ds', JSON.stringify({id:sessionId, driver:selectedDriver, branch:selectedBranch, startTime:startTime.toISOString(), km:0}));
+
+  startSession();
+}
+
+function startSession(){
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('session-screen').classList.remove('hidden');
+  document.getElementById('s-driver-name').textContent = selectedDriver.n;
+  document.getElementById('s-vehicle').textContent = selectedDriver.v;
+  document.getElementById('s-branch').textContent = selectedBranch;
+  document.getElementById('s-info-driver').textContent = selectedDriver.n;
+  document.getElementById('s-info-vehicle').textContent = selectedDriver.v;
+  document.getElementById('s-info-branch').textContent = selectedBranch;
+  document.getElementById('s-clockin-time').textContent = startTime.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+
+  startGPS();
+  durationTimer = setInterval(updateDuration, 1000);
+}
+
+// ── GPS tracking ──────────────────────────────────────────────────
+function startGPS(){
+  if (!navigator.geolocation){ document.getElementById('gps-status').textContent='GPS not available'; return; }
+  watchId = navigator.geolocation.watchPosition(pos=>{
+    const {latitude:la, longitude:lo, accuracy:ac} = pos.coords;
+    document.getElementById('gps-status').textContent = `GPS: ±${Math.round(ac)}m`;
+    currentLat=la; currentLng=lo;
+    if (lastLat!==null){
+      const d = haversine(lastLat,lastLng,la,lo);
+      if (d>0.01){ totalKm=parseFloat((totalKm+d).toFixed(3)); document.getElementById('km-display').textContent=totalKm.toFixed(2); }
     }
-  }
+    lastLat=la; lastLng=lo;
+    const s = JSON.parse(localStorage.getItem('ds')||'{}');
+    if (s.id) localStorage.setItem('ds', JSON.stringify({...s,km:totalKm}));
+  }, e=>{ document.getElementById('gps-status').textContent='GPS: '+e.message; }, {enableHighAccuracy:true,maximumAge:5000,timeout:10000});
+}
 
-  // ── Create PIN screen ────────────────────────────────────
+function updateDuration(){
+  if (!startTime) return;
+  const diff = Math.floor((Date.now()-startTime.getTime())/1000);
+  const h=String(Math.floor(diff/3600)).padStart(2,'0'), m=String(Math.floor(diff%3600/60)).padStart(2,'0');
+  document.getElementById('s-duration').textContent=`${h}:${m}`;
+}
 
-  const newPin     = wirePinBoxes('npin-', 4, () => confirmPin.boxes[0].focus(), checkSetPinReady);
-  const confirmPin = wirePinBoxes('cpin-', 4, submitNewPin, checkSetPinReady);
+// ── Clock Out ─────────────────────────────────────────────────────
+async function clockOut(){
+  document.getElementById('clock-out-btn').disabled = true;
+  const notes = document.getElementById('notes-area').value.trim();
 
-  function checkSetPinReady() {
-    document.getElementById('set-pin-btn').disabled =
-      newPin.getVal().length < 4 || confirmPin.getVal().length < 4;
-  }
-
-  async function submitNewPin() {
-    const np = newPin.getVal(), cp = confirmPin.getVal();
-    if (np.length < 4 || cp.length < 4) return;
-    const errEl = document.getElementById('create-pin-error');
-    if (np !== cp) {
-      errEl.textContent = 'PINs do not match. Please try again.';
-      confirmPin.clear(); confirmPin.boxes[0].focus();
-      return;
-    }
-    document.getElementById('set-pin-btn').disabled = true;
-    errEl.textContent = '';
-    try {
-      const res = await fetch('/api/driver/set-pin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ driver_name: driverName, new_pin: np }),
-      });
-      if (!res.ok) throw new Error();
-      localStorage.setItem('driverName',   driverName);
-      localStorage.setItem('driverBranch', driverBranch);
-      document.getElementById('create-pin-screen').classList.add('hidden');
-      showMain();
-    } catch {
-      errEl.textContent = 'Connection error. Please try again.';
-      document.getElementById('set-pin-btn').disabled = false;
-    }
-  }
-
-  // ── Forgot PIN ────────────────────────────────────────────
-
-  function showForgotPin() {
-    document.getElementById('forgot-name').value = nameInput.value.trim();
-    document.getElementById('forgot-admin-pw').value = '';
-    document.getElementById('forgot-error').textContent = '';
-    document.getElementById('forgot-pin-modal').classList.remove('hidden');
-    setTimeout(() => {
-      const fn = document.getElementById('forgot-name');
-      fn.value ? document.getElementById('forgot-admin-pw').focus() : fn.focus();
-    }, 60);
-  }
-
-  function hideForgotPin() {
-    document.getElementById('forgot-pin-modal').classList.add('hidden');
-  }
-
-  document.getElementById('forgot-admin-pw').addEventListener('keydown', e => {
-    if (e.key === 'Enter') submitResetPin();
+  await fetch('/api/driver/clock',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({driver_name:selectedDriver.n, vehicle_number:selectedDriver.v, event_type:'clock_out', branch:selectedBranch, latitude:currentLat, longitude:currentLng, km_consumed:totalKm, destination:notes})
   });
 
-  async function submitResetPin() {
-    const name  = document.getElementById('forgot-name').value.trim();
-    const admin = document.getElementById('forgot-admin-pw').value.trim();
-    const errEl = document.getElementById('forgot-error');
-    const btn   = document.getElementById('reset-pin-btn');
-    if (!name || !admin) { errEl.textContent = 'Both fields are required.'; return; }
-    btn.disabled = true; errEl.textContent = '';
-    try {
-      const res = await fetch('/api/driver/reset-pin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ driver_name: name, admin_password: admin }),
-      });
-      if (!res.ok) {
-        errEl.textContent = 'Incorrect admin password.';
-        document.getElementById('forgot-admin-pw').value = '';
-        document.getElementById('forgot-admin-pw').focus();
-        btn.disabled = false;
-        return;
-      }
-      hideForgotPin();
-      nameInput.value = name;
-      loginPin.clear(); loginPin.boxes[0].focus();
-      document.getElementById('setup-error').textContent = '';
-      checkLoginReady();
-      showToast('PIN reset — log in with the default PIN 1234', 'info');
-    } catch {
-      errEl.textContent = 'Connection error. Please try again.';
-      btn.disabled = false;
-    }
+  if (watchId!==null) navigator.geolocation.clearWatch(watchId);
+  clearInterval(durationTimer);
+  localStorage.removeItem('ds');
+
+  alert(`✅ Clocked out.\nKM Consumed: ${totalKm.toFixed(2)} km\nDriver: ${selectedDriver.n}`);
+  location.reload();
+}
+
+// ── Restore session on load ───────────────────────────────────────
+window.addEventListener('load',()=>{
+  const s = JSON.parse(localStorage.getItem('ds')||'null');
+  if (s && s.id){
+    sessionId = s.id;
+    selectedDriver = s.driver;
+    selectedBranch = s.branch;
+    startTime = new Date(s.startTime);
+    totalKm = s.km || 0;
+    document.getElementById('km-display').textContent = totalKm.toFixed(2);
+    startSession();
   }
+});
 
-  // ── Sign out ──────────────────────────────────────────────
-
-  function doSignOut() {
-    if (!confirm('Sign out of the driver app?')) return;
-    localStorage.removeItem('driverName');
-    localStorage.removeItem('driverBranch');
-    driverName = ''; driverBranch = '';
-    document.getElementById('main-screen').classList.add('hidden');
-    document.getElementById('setup-screen').classList.remove('hidden');
-    nameInput.value = '';
-    branchSelect.value = '';
-    loginPin.clear();
-    document.getElementById('setup-error').textContent = '';
-    saveBtn.disabled = true;
-  }
-
-  document.getElementById('dest-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') confirmDeparture();
-  });
-  document.getElementById('dest-modal').addEventListener('click', e => {
-    if (e.target === document.getElementById('dest-modal')) cancelDeparture();
-  });
-
-  // ── Main screen ─────────────────────────────────────────
-
-  function showMain() {
-    document.getElementById('setup-screen').classList.add('hidden');
-    document.getElementById('main-screen').classList.remove('hidden');
-    document.getElementById('header-name').textContent = driverName;
-
-    const now = new Date();
-    const dateStr = now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    document.getElementById('date-line').textContent =
-      driverBranch ? `${driverBranch} · ${dateStr}` : dateStr;
-
-    loadToday();
-  }
-
-  // ── GPS ─────────────────────────────────────────────────
-
-  function getGPS() {
-    return new Promise(resolve => {
-      if (!navigator.geolocation) { resolve(null); return; }
-      navigator.geolocation.getCurrentPosition(
-        p => resolve({ latitude: p.coords.latitude, longitude: p.coords.longitude, accuracy: p.coords.accuracy }),
-        () => resolve(null),
-        { timeout: 10000, enableHighAccuracy: true, maximumAge: 0 }
-      );
-    });
-  }
-
-  // ── Clock-out review ────────────────────────────────────
-
-  function promptClockOut() {
-    const clockIns = todayEvents.filter(e => e.event_type === 'lodgment_departure');
-    const listEl   = document.getElementById('clockout-list');
-
-    if (clockIns.length === 0) {
-      listEl.innerHTML = '<div class="clockout-empty">No clock-ins recorded yet today.</div>';
-    } else {
-      listEl.innerHTML = clockIns.map(e => {
-        const time = new Date(e.clocked_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const dest = e.destination || 'No destination entered';
-        return `<div class="clockout-item">
-          <div class="clockout-item-dot"></div>
-          <div class="clockout-item-body">
-            <div class="clockout-item-time">Clocked in at ${time}</div>
-            <div class="clockout-item-dest">📍 ${dest}</div>
-          </div>
-        </div>`;
-      }).join('');
-    }
-
-    document.getElementById('clockout-modal').classList.remove('hidden');
-  }
-
-  function cancelClockOut() {
-    document.getElementById('clockout-modal').classList.add('hidden');
-  }
-
-  function confirmClockOut() {
-    document.getElementById('clockout-modal').classList.add('hidden');
-    doEvent('lodgment_return');
-  }
-
-  document.getElementById('clockout-modal').addEventListener('click', e => {
-    if (e.target === document.getElementById('clockout-modal')) cancelClockOut();
-  });
-
-  // ── Destination modal ───────────────────────────────────
-
-  function promptDeparture() {
-    document.getElementById('dest-input').value = '';
-    document.getElementById('dest-modal').classList.remove('hidden');
-    setTimeout(() => document.getElementById('dest-input').focus(), 80);
-  }
-
-  function cancelDeparture() {
-    document.getElementById('dest-modal').classList.add('hidden');
-  }
-
-  function confirmDeparture() {
-    const dest = document.getElementById('dest-input').value.trim();
-    document.getElementById('dest-modal').classList.add('hidden');
-    doEvent('lodgment_departure', dest);
-  }
-
-  // ── Clock action ────────────────────────────────────────
-
-  async function doEvent(eventType, destination) {
-    setLoading(true, 'Getting GPS location…');
-
-    const gps = await getGPS();
-
-    let gps_address = null;
-    if (gps) {
-      setLoadingText('Getting address…');
-      try {
-        const r = await fetch(`/api/geocode?lat=${gps.latitude}&lon=${gps.longitude}`);
-        const d = await r.json();
-        gps_address = d.address || null;
-      } catch { /* ignore, still record with coords */ }
-    }
-
-    setLoadingText('Recording…');
-
-    try {
-      const body = {
-        driver_name: driverName,
-        event_type:  eventType,
-        branch:      driverBranch,
-        ...(gps || {}),
-      };
-      if (destination)  body.destination  = destination;
-      if (gps_address)  body.gps_address  = gps_address;
-
-      const res = await fetch('/api/driver/clock', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) throw new Error();
-
-      setLoading(false);
-      const locStr = gps ? `GPS ±${Math.round(gps.accuracy)}m` : 'no GPS';
-      showToast(`${LABELS[eventType]} recorded · ${locStr}`, 'success');
-      loadToday();
-    } catch {
-      setLoading(false);
-      showToast('Failed — check your connection', 'error');
-    }
-  }
-
-  // ── Load today ──────────────────────────────────────────
-
-  async function loadToday() {
-    const today = localDateStr();
-    try {
-      const res = await fetch(`/api/driver/today?driver_name=${encodeURIComponent(driverName)}&date=${today}`);
-      const events = await res.json();
-      todayEvents = events;
-      renderStatus(events);
-      renderTimeline(events);
-    } catch {
-      // network error — leave existing content
-    }
-  }
-
-  function localDateStr() {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
-
-  function renderStatus(events) {
-    const done = new Set(events.map(e => e.event_type));
-    const html = Object.entries(LABELS).map(([k, label]) => {
-      const isDone = done.has(k);
-      return `<span class="chip ${isDone ? 'chip-done' : 'chip-pending'}">${isDone ? '✓' : '○'} ${label}</span>`;
-    }).join('');
-    document.getElementById('status-chips').innerHTML = html;
-  }
-
-  function renderTimeline(events) {
-    const el = document.getElementById('timeline');
-    if (!events.length) {
-      el.innerHTML = '<div class="empty-msg">No activity recorded yet today</div>';
-      return;
-    }
-    el.innerHTML = events.map(e => {
-      const t    = new Date(e.clocked_at);
-      const time = t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const acc  = e.accuracy ? ` ±${Math.round(e.accuracy)}m` : '';
-      const gpsText = e.gps_address
-        ? `📌 ${e.gps_address}${acc}`
-        : (e.latitude && e.longitude)
-          ? `${e.latitude.toFixed(5)}, ${e.longitude.toFixed(5)}${acc}`
-          : 'GPS not available';
-      const label = LABELS[e.event_type] || e.event_type;
-      const meta  = e.destination ? `📍 ${e.destination} · ${gpsText}` : gpsText;
-      return `<div class="tl-item">
-        <div class="tl-dot dot-${e.event_type}"></div>
-        <div class="tl-body">
-          <div class="tl-event">${label}</div>
-          <div class="tl-meta">${meta}</div>
-        </div>
-        <div class="tl-time">${time}</div>
-      </div>`;
-    }).join('');
-  }
-
-  // ── UI helpers ──────────────────────────────────────────
-
-  function setLoading(on, text) {
-    const overlay = document.getElementById('loading-overlay');
-    overlay.classList.toggle('hidden', !on);
-    if (text) document.getElementById('loading-text').textContent = text;
-    document.querySelectorAll('.action-btn').forEach(b => b.disabled = on);
-  }
-
-  function setLoadingText(t) {
-    document.getElementById('loading-text').textContent = t;
-  }
-
-  let _toastTimer;
-  function showToast(msg, type = 'info') {
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.className = `${type} show`;
-    clearTimeout(_toastTimer);
-    _toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
-  }
-
-  // ── Service worker ──────────────────────────────────────
-
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
-  }
-
-  // ── Init ─────────────────────────────────────────────────
-
-  if (driverName) {
-    showMain();
-  }
+function showErr(msg){ const e=document.getElementById('login-err'); e.textContent=msg; e.classList.remove('hidden'); }
 </script>
 </body>
 </html>

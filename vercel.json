@@ -7,8 +7,11 @@
   "routes": [
     { "src": "/api/(.*)",     "dest": "/server.py" },
     { "src": "/attend/(.*)", "dest": "/server.py" },
-    { "src": "/driver",      "dest": "/public/driver.html" },
-    { "src": "/",            "dest": "/public/index.html" },
+    { "src": "/driver",         "dest": "/public/driver.html" },
+    { "src": "/drivers",        "dest": "/public/driver.html" },
+    { "src": "/driver-report",  "dest": "/public/driver-report.html" },
+    { "src": "/drivers/report", "dest": "/public/driver-report.html" },
+    { "src": "/",               "dest": "/public/index.html" },
     { "src": "/(.*)",        "dest": "/public/$1" }
   ]
 }

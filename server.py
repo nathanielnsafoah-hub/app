@@ -83,6 +83,8 @@ def init_db():
         ALTER TABLE driver_clockings ADD COLUMN IF NOT EXISTS destination TEXT;
         ALTER TABLE driver_clockings ADD COLUMN IF NOT EXISTS branch TEXT;
         ALTER TABLE driver_clockings ADD COLUMN IF NOT EXISTS gps_address TEXT;
+        ALTER TABLE driver_clockings ADD COLUMN IF NOT EXISTS vehicle_number TEXT;
+        ALTER TABLE driver_clockings ADD COLUMN IF NOT EXISTS km_consumed REAL DEFAULT 0;
 
         CREATE TABLE IF NOT EXISTS events (
             id          SERIAL PRIMARY KEY,
@@ -413,18 +415,22 @@ def driver_clock():
     if event_type not in VALID_EVENT_TYPES:
         return jsonify(error="Invalid event type"), 400
 
-    destination = (data.get("destination")  or "").strip() or None
-    branch      = (data.get("branch")       or "").strip() or None
-    gps_address = (data.get("gps_address")  or "").strip() or None
+    destination    = (data.get("destination")    or "").strip() or None
+    branch         = (data.get("branch")         or "").strip() or None
+    gps_address    = (data.get("gps_address")    or "").strip() or None
+    vehicle_number = (data.get("vehicle_number") or "").strip() or None
+    km_consumed    = data.get("km_consumed") or 0
 
     db = get_db()
     cur = db.cursor()
     cur.execute(
-        """INSERT INTO driver_clockings (driver_name, event_type, latitude, longitude, accuracy, destination, branch, gps_address)
-           VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id, clocked_at""",
+        """INSERT INTO driver_clockings
+             (driver_name, event_type, latitude, longitude, accuracy,
+              destination, branch, gps_address, vehicle_number, km_consumed)
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id, clocked_at""",
         (driver_name, event_type,
          data.get("latitude"), data.get("longitude"), data.get("accuracy"),
-         destination, branch, gps_address),
+         destination, branch, gps_address, vehicle_number, km_consumed),
     )
     row = cur.fetchone()
     db.commit()
