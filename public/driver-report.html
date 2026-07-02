@@ -47,7 +47,10 @@
     .badge-on{background:#dcfce7;color:#15803d}
     .badge-done{background:#f1f5f9;color:#64748b}
     tfoot td{background:#f0fdf4;font-weight:900;color:#15803d;border-top:2px solid #bbf7d0}
-    .loc-link{font-size:.75rem;padding:3px 8px;border-radius:6px;text-decoration:none;font-weight:700}
+    .loc-cell{vertical-align:top;max-width:180px}
+    .loc-addr{display:block;font-size:.78rem;font-weight:700;color:#1e293b;margin-bottom:3px;line-height:1.3}
+    .loc-manual{color:#0369a1}
+    .loc-link{display:inline-block;font-size:.72rem;padding:2px 7px;border-radius:6px;text-decoration:none;font-weight:700;margin-top:2px}
     .loc-in{background:#eff6ff;color:#1d4ed8}
     .loc-out{background:#fff1f2;color:#dc2626}
     @media(max-width:600px){.stats{grid-template-columns:1fr 1fr}.table-wrap{padding:0 8px 16px}}
@@ -115,11 +118,14 @@
       <tr>
         <th>Driver</th><th>Vehicle</th><th>Branch</th><th>Date</th>
         <th>Clock In</th><th>Clock Out</th><th>Duration</th>
-        <th>KM</th><th>Status</th><th>Location</th><th>Notes</th>
+        <th>KM</th><th>Status</th>
+        <th>📍 Start Location</th>
+        <th>🏁 End Location</th>
+        <th>Notes</th>
       </tr>
     </thead>
     <tbody id="tbody"></tbody>
-    <tfoot><tr><td colspan="7">TOTAL</td><td id="f-km">0.00 km</td><td colspan="3"></td></tr></tfoot>
+    <tfoot><tr><td colspan="7">TOTAL</td><td id="f-km">0.00 km</td><td colspan="4"></td></tr></tfoot>
   </table>
 </div>
 
@@ -166,11 +172,15 @@ async function load(){
         <td>${dur(s.inTime,s.outTime)}</td>
         <td style="font-weight:900;color:#7c3aed">${km.toFixed(2)} km</td>
         <td><span class="badge ${s.status==='on_duty'?'badge-on':'badge-done'}">${s.status==='on_duty'?'🟢 On Duty':'✅ Done'}</span></td>
-        <td>
-          ${inUrl?`<a class="loc-link loc-in" href="${inUrl}" target="_blank">In📍</a>`:''}
-          ${outUrl?`<a class="loc-link loc-out" href="${outUrl}" target="_blank">Out📍</a>`:''}
+        <td class="loc-cell">
+          ${s.gpsIn ? `<span class="loc-addr">${s.gpsIn}</span>` : (s.fromLoc ? `<span class="loc-addr loc-manual">${s.fromLoc}</span>` : '')}
+          ${inUrl ? `<a class="loc-link loc-in" href="${inUrl}" target="_blank">📍 Map</a>` : (s.gpsIn||s.fromLoc ? '' : '<span style="color:#cbd5e1">—</span>')}
         </td>
-        <td style="color:#64748b;font-size:.8rem">${s.notes||'—'}</td>
+        <td class="loc-cell">
+          ${s.gpsOut ? `<span class="loc-addr">${s.gpsOut}</span>` : (s.toLoc ? `<span class="loc-addr loc-manual">${s.toLoc}</span>` : '')}
+          ${outUrl ? `<a class="loc-link loc-out" href="${outUrl}" target="_blank">📍 Map</a>` : (s.gpsOut||s.toLoc ? '' : '<span style="color:#cbd5e1">—</span>')}
+        </td>
+        <td style="color:#64748b;font-size:.8rem">${s.fromLoc&&s.toLoc ? `${s.fromLoc} → ${s.toLoc}` : (s.notes||'—')}</td>
       </tr>
     `);
   });
@@ -207,6 +217,12 @@ function buildSessions(rows){
           inLat:r.latitude, inLng:r.longitude,
           outLat: isOut?next.latitude:null, outLng: isOut?next.longitude:null,
           km: isOut?(next.km_consumed||0):(r.km_consumed||0),
+          // GPS-detected addresses (from reverse geocoding at clock-in/out)
+          gpsIn: r.gps_address||'',
+          gpsOut: isOut?(next.gps_address||''):'',
+          // Manually typed locations (from/to fields)
+          fromLoc: r.destination||'',
+          toLoc: isOut?(next.destination||''):'',
           notes: isOut?(next.destination||''):(r.destination||''),
           status: isOut?'done':'on_duty'
         });
