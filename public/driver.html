@@ -118,12 +118,22 @@
         <option>DOMINASE</option>
       </select>
     </div>
+    <!-- Driver name dropdown (all multi-driver branches) -->
     <div class="field hidden" id="driver-sel-wrap">
-      <label>Select Driver</label>
+      <label>Select Driver Name</label>
       <select id="driver-sel" onchange="onDriverSelect()">
         <option value="">— Choose Driver —</option>
       </select>
     </div>
+
+    <!-- Separate vehicle dropdown (HEAD OFFICE only) -->
+    <div class="field hidden" id="vehicle-sel-wrap">
+      <label>Select Vehicle Number</label>
+      <select id="vehicle-sel" onchange="onVehicleSelect()" style="font-family:monospace;font-weight:800">
+        <option value="">— Choose Vehicle —</option>
+      </select>
+    </div>
+
     <div class="dinfo hidden" id="dinfo">
       <div class="dinfo-row"><span class="dinfo-icon">👤</span><div><div class="dinfo-lbl">Driver</div><div class="dinfo-val" id="dinfo-name">—</div></div></div>
       <div class="dinfo-row"><span class="dinfo-icon">🚗</span><div><div class="dinfo-lbl">Vehicle</div><div class="dinfo-val" id="dinfo-vehicle" style="color:var(--g);letter-spacing:.06em">—</div></div></div>
@@ -367,20 +377,37 @@ function hav(la1,lo1,la2,lo2){
 function show(id){['step-select','step-pin','step-create-pin','step-clockin','step-session'].forEach(s=>document.getElementById(s).classList.add('hidden'));document.getElementById(id).classList.remove('hidden');if(id==='step-session')document.body.classList.add('session-mode');else document.body.classList.remove('session-mode');}
 
 /* ── Branch / driver selection ───────────────────────────── */
+// Tracks separate HO name & vehicle selections
+let hoSelectedName='', hoSelectedVehicle='';
+
 function onBranchChange(){
   branch=document.getElementById('branch-sel').value;
-  driver=null;
+  driver=null; hoSelectedName=''; hoSelectedVehicle='';
   document.getElementById('dinfo').classList.add('hidden');
   document.getElementById('driver-sel-wrap').classList.add('hidden');
+  document.getElementById('vehicle-sel-wrap').classList.add('hidden');
   document.getElementById('continue-btn').disabled=true;
-  const sel=document.getElementById('driver-sel');
-  sel.innerHTML='<option value="">— Choose Driver —</option>';
-  let list=null;
-  if(branch==='HEAD OFFICE')list=HO;
-  else if(branch==='MICROFINANCE')list=MF;
-  else if(branch==='DUNKWA')list=DUNKWA;
-  if(list){
-    list.forEach((d,i)=>sel.insertAdjacentHTML('beforeend',`<option value="${i}">${d.n}${d.sub?' ('+d.sub+')':''} — ${d.v}</option>`));
+
+  const dSel=document.getElementById('driver-sel');
+  const vSel=document.getElementById('vehicle-sel');
+  dSel.innerHTML='<option value="">— Choose Driver Name —</option>';
+  vSel.innerHTML='<option value="">— Choose Vehicle —</option>';
+
+  if(branch==='HEAD OFFICE'){
+    // Separate name list (unique names)
+    const names=[...new Set(HO.map(d=>d.n))];
+    names.forEach(n=>dSel.insertAdjacentHTML('beforeend',`<option value="${n}">${n}</option>`));
+    document.getElementById('driver-sel-wrap').classList.remove('hidden');
+
+    // Separate vehicle list (all vehicles)
+    HO.forEach(d=>vSel.insertAdjacentHTML('beforeend',`<option value="${d.v}">${d.v}</option>`));
+    document.getElementById('vehicle-sel-wrap').classList.remove('hidden');
+
+  } else if(branch==='MICROFINANCE'){
+    MF.forEach((d,i)=>dSel.insertAdjacentHTML('beforeend',`<option value="${i}">${d.n} (${d.sub}) — ${d.v}</option>`));
+    document.getElementById('driver-sel-wrap').classList.remove('hidden');
+  } else if(branch==='DUNKWA'){
+    DUNKWA.forEach((d,i)=>dSel.insertAdjacentHTML('beforeend',`<option value="${i}">${d.n} — ${d.v}</option>`));
     document.getElementById('driver-sel-wrap').classList.remove('hidden');
   } else if(SINGLE[branch]){
     driver=SINGLE[branch];
@@ -388,13 +415,38 @@ function onBranchChange(){
     document.getElementById('continue-btn').disabled=false;
   }
 }
+
 function onDriverSelect(){
-  const v=document.getElementById('driver-sel').value;
-  if(!v){driver=null;document.getElementById('dinfo').classList.add('hidden');document.getElementById('continue-btn').disabled=true;return;}
-  const list=branch==='HEAD OFFICE'?HO:branch==='MICROFINANCE'?MF:DUNKWA;
-  driver=list[parseInt(v)];
-  showDinfo();
-  document.getElementById('continue-btn').disabled=false;
+  const val=document.getElementById('driver-sel').value;
+  if(!val){driver=null;hoSelectedName='';document.getElementById('dinfo').classList.add('hidden');document.getElementById('continue-btn').disabled=true;return;}
+
+  if(branch==='HEAD OFFICE'){
+    hoSelectedName=val;
+    checkHOReady();
+  } else {
+    const list=branch==='MICROFINANCE'?MF:DUNKWA;
+    driver=list[parseInt(val)];
+    showDinfo();
+    document.getElementById('continue-btn').disabled=false;
+  }
+}
+
+function onVehicleSelect(){
+  const val=document.getElementById('vehicle-sel').value;
+  hoSelectedVehicle=val;
+  checkHOReady();
+}
+
+function checkHOReady(){
+  if(hoSelectedName && hoSelectedVehicle){
+    driver={n:hoSelectedName, v:hoSelectedVehicle};
+    showDinfo();
+    document.getElementById('continue-btn').disabled=false;
+  } else {
+    driver=null;
+    document.getElementById('dinfo').classList.add('hidden');
+    document.getElementById('continue-btn').disabled=true;
+  }
 }
 function showDinfo(){
   document.getElementById('dinfo-name').textContent=driver.n;
