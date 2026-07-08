@@ -58,10 +58,10 @@
 
 <!-- No session screen -->
 <div id="no-session" style="display:none">
-  <div class="icon">🔐</div>
-  <h2>Not Logged In</h2>
-  <p>Please clock in first to view your trip history.</p>
-  <a href="/driver">← Go to Driver Log</a>
+  <div class="icon">🚗</div>
+  <h2>Session Expired</h2>
+  <p>Please go back and select your branch and log in with your PIN to view your trips.</p>
+  <a href="/driver">← Back to Driver Log</a>
 </div>
 
 <!-- Main content -->
@@ -100,12 +100,15 @@
 let myDriver = null;
 
 window.addEventListener('load', () => {
-  // Read driver session saved after PIN login — NO re-login needed
-  const raw = sessionStorage.getItem('driverSession');
+  // Check sessionStorage first, then fall back to localStorage (persists across navigation)
+  const raw = sessionStorage.getItem('driverSession') || localStorage.getItem('driverIdentity');
   if (!raw) {
     document.getElementById('no-session').style.display = 'block';
     return;
   }
+
+  // Keep sessionStorage in sync
+  if (!sessionStorage.getItem('driverSession')) sessionStorage.setItem('driverSession', raw);
 
   const session = JSON.parse(raw);
   myDriver = session.driver;

@@ -549,8 +549,10 @@ function goToClockIn(){
   document.getElementById('from-location').value='';
   document.getElementById('gps-from-hint').textContent='🛰 Detecting GPS location...';
   show('step-clockin');
-  // Save driver session to sessionStorage so My Trips can read it
-  sessionStorage.setItem('driverSession', JSON.stringify({driver, branch}));
+  // Save driver identity to BOTH sessionStorage and localStorage so My Trips always finds it
+  const _identity = JSON.stringify({driver, branch});
+  sessionStorage.setItem('driverSession', _identity);
+  localStorage.setItem('driverIdentity', _identity);
   // Try to auto-fill from-location from GPS
   if(navigator.geolocation){
     navigator.geolocation.getCurrentPosition(async pos=>{
@@ -635,17 +637,35 @@ async function clockOut(){
   let gpsAddress='';
   if(currentLat) gpsAddress=await reverseGeocode(currentLat,currentLng);
   await fetch('/api/driver/clock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({driver_name:driver.n,vehicle_number:driver.v,event_type:'clock_out',branch,latitude:currentLat,longitude:currentLng,km_consumed:totalKm,destination:combined||undefined,gps_address:gpsAddress||toLocation||undefined})});
-  if(watchId!==null)navigator.geolocation.clearWatch(watchId);
+  if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null;}
   clearInterval(durTimer);
   localStorage.removeItem('ds');
-  alert(`✅ Clocked out successfully!\nKM Consumed: ${totalKm.toFixed(2)} km`);
-  location.reload();
+
+  const kmDone = totalKm.toFixed(2);
+
+  // Reset tracking variables but KEEP driver & branch for re-use
+  totalKm=0; startTime=null; lastLat=null; lastLng=null; currentLat=null; currentLng=null;
+  document.getElementById('to-location').value='';
+  document.getElementById('notes').value='';
+
+  // Show success then return to clock-in screen (not branch selection)
+  alert(`✅ Clocked out!\nKM Consumed: ${kmDone} km\n\nYou can clock in again below.`);
+  goToClockIn();
 }
 
 /* ── Restore session on load ─────────────────────────────── */
 window.addEventListener('load',()=>{
   const s=JSON.parse(localStorage.getItem('ds')||'null');
-  if(s&&s.driver){driver=s.driver;branch=s.branch;startTime=new Date(s.startTime);totalKm=s.km||0;document.getElementById('km-val').textContent=totalKm.toFixed(2);startActiveSession();}
+  if(s&&s.driver){
+    driver=s.driver; branch=s.branch;
+    startTime=new Date(s.startTime); totalKm=s.km||0;
+    document.getElementById('km-val').textContent=totalKm.toFixed(2);
+    // Ensure My Trips can always read driver identity
+    const _identity=JSON.stringify({driver:s.driver,branch:s.branch});
+    sessionStorage.setItem('driverSession',_identity);
+    localStorage.setItem('driverIdentity',_identity);
+    startActiveSession();
+  }
 });
 
 /* ── Reset PIN (no admin needed) ───────────────────────── */
