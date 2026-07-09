@@ -69,7 +69,10 @@
   <div class="header">
     <div class="header-top">
       <h1>📋 My Trips</h1>
-      <a href="/driver">← Back</a>
+      <div style="display:flex;gap:8px;align-items:center">
+        <a href="/driver" style="background:rgba(255,255,255,.2);color:#fff;padding:7px 14px;border-radius:10px;text-decoration:none;font-weight:700;font-size:.82rem">← Back</a>
+        <button onclick="signOut()" style="background:rgba(220,38,38,.7);color:#fff;border:none;padding:7px 12px;border-radius:10px;font-weight:700;font-size:.78rem;cursor:pointer">Sign Out</button>
+      </div>
     </div>
     <!-- Static driver identity — read from session, NOT editable -->
     <div class="id-card">
@@ -209,6 +212,14 @@ function buildSessions(rows) {
 function fmt(dt) { if (!dt) return '—'; return new Date(dt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); }
 function fmtDate(dt) { if (!dt) return '—'; return new Date(dt).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }); }
 function dur(i, o) { if (!o) return 'On duty'; const s = Math.floor((new Date(o) - new Date(i)) / 1000); return `${String(Math.floor(s / 3600)).padStart(2, '0')}h ${String(Math.floor(s % 3600 / 60)).padStart(2, '0')}m`; }
+
+function signOut() {
+  if (!confirm('Sign out? You will need to select your branch and log in again.')) return;
+  sessionStorage.removeItem('driverSession');
+  localStorage.removeItem('driverIdentity');
+  localStorage.removeItem('ds');
+  window.location.href = '/driver';
+}
 </script>
 </body>
 </html>

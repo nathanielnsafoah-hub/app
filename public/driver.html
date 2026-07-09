@@ -655,17 +655,30 @@ async function clockOut(){
 
 /* ── Restore session on load ─────────────────────────────── */
 window.addEventListener('load',()=>{
+  // Case 1: Driver is actively clocked in — restore live session
   const s=JSON.parse(localStorage.getItem('ds')||'null');
   if(s&&s.driver){
     driver=s.driver; branch=s.branch;
     startTime=new Date(s.startTime); totalKm=s.km||0;
     document.getElementById('km-val').textContent=totalKm.toFixed(2);
-    // Ensure My Trips can always read driver identity
     const _identity=JSON.stringify({driver:s.driver,branch:s.branch});
     sessionStorage.setItem('driverSession',_identity);
     localStorage.setItem('driverIdentity',_identity);
     startActiveSession();
+    return;
   }
+
+  // Case 2: Driver previously logged in with PIN but not currently clocked in
+  // (e.g. coming back from My Trips page) — go straight to clock-in screen
+  const identity=sessionStorage.getItem('driverSession')||localStorage.getItem('driverIdentity');
+  if(identity){
+    const parsed=JSON.parse(identity);
+    driver=parsed.driver; branch=parsed.branch;
+    sessionStorage.setItem('driverSession',identity);
+    localStorage.setItem('driverIdentity',identity);
+    goToClockIn(); // Show clock-in screen with driver name & vehicle already filled
+  }
+  // Case 3: No session at all — show initial branch selection (default)
 });
 
 /* ── Reset PIN (no admin needed) ───────────────────────── */
