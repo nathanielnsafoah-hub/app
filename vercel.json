@@ -5,6 +5,11 @@
     { "src": "public/**", "use": "@vercel/static" }
   ],
   "routes": [
+    {
+      "src": "/",
+      "has": [{ "type": "host", "value": "driverapp.amenfiman.com" }],
+      "dest": "/public/driver.html"
+    },
     { "src": "/api/(.*)",     "dest": "/server.py" },
     { "src": "/attend/(.*)", "dest": "/server.py" },
     { "src": "/driver",         "dest": "/public/driver.html" },
